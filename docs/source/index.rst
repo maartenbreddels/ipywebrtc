@@ -35,14 +35,6 @@ Camera stream:
 
 Making a 'chat room'
 
-.. ipywidgets-display::
-    import ipywebrtc
-    import ipywidgets as widgets
-    camera = ipywebrtc.CameraStream()
-    room = ipywebrtc.WebRTCRoomMqtt(stream=camera, room='readthedocs')
-    box = widgets.HBox(children=[])
-    widgets.jslink((room, 'streams'), (box, 'children'))
-    box
 
 .. toctree::
    :maxdepth: 2

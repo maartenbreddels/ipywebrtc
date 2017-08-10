@@ -1,0 +1,10 @@
+jupyter_sphinx>=0.1.1
+ipyvolume==0.4.0a2
+ipywidgets>=7.0.0a9
+traittypes
+traitlets
+Pillow
+scipy
+nbsphinx
+recommonmark
+matplotlib<2

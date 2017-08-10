@@ -39,7 +39,7 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['@jupyter-widgets/base']
+        externals: ['@jupyter-widgets/base', '@jupyter-widgets/controls']
     },
     {// Embeddable jupyter-webrtc bundle
      //
@@ -66,6 +66,6 @@ module.exports = [
         module: {
             loaders: loaders
         },
-        externals: ['@jupyter-widgets/base']
+        externals: ['@jupyter-widgets/base', '@jupyter-widgets/controls']
     }
 ];

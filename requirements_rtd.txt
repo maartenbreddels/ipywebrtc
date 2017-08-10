@@ -1,10 +1,7 @@
-jupyter_sphinx>=0.1.1
-ipyvolume==0.4.0a2
-ipywidgets>=7.0.0a9
-traittypes
+#jupyter_sphinx>=0.1.1
+git+https://github.com/maartenbreddels/jupyter-sphinx@ipywidgets7require
+ipywebrtc==0.1.1
+ipywidgets>=7.0.0b7
 traitlets
-Pillow
-scipy
 nbsphinx
 recommonmark
-matplotlib<2

@@ -69,6 +69,8 @@ class WebRTCRoom(widgets.DOMWidget):
     #_view_module = Unicode('jupyter-webrtc').tag(sync=True)
     #_view_name = Unicode('WebRTCPeerView').tag(sync=True)
     _model_name = Unicode('WebRTCRoomModel').tag(sync=True)
+    #_view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
     room = Unicode('room').tag(sync=True)
     stream = traitlets.Instance(object, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
     id = Unicode(read_only=True).tag(sync=True)

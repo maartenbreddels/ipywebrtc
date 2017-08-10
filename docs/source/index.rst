@@ -28,18 +28,22 @@ Since video is a widget, we can control the play property using a toggle button.
     widgets.VBox(children=[video, play_button])
 
 Camera stream:
+
 .. ipywidgets-display::
     import ipywebrtc
     ipywebrtc.CameraStream()
 
 Making a 'chat room'
+
 .. ipywidgets-display::
     import ipywebrtc
+    import ipywidgets as widgets
     camera = ipywebrtc.CameraStream()
-    room = ipv.WebRTCRoomMqtt(stream=camera, room='readthedocs')
+    room = ipywebrtc.WebRTCRoomMqtt(stream=camera, room='readthedocs')
     box = widgets.HBox(children=[])
     widgets.jslink((room, 'streams'), (box, 'children'))
     box
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

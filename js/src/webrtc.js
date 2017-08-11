@@ -49,7 +49,7 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
     render: function() {
         var that = this;
         that.model.stream.then(function(stream) {
-            that.el.src = window.URL.createObjectURL(stream);
+            that.el.srcObject = stream;
             that.el.play()
         })
     }
@@ -579,7 +579,7 @@ var WebRTCPeerView = widgets.DOMWidgetView.extend({
     render: function() {
         var that = this;
         that.model.stream.then(function(stream) {
-            that.el.src = window.URL.createObjectURL(stream);
+            that.el.srcObject = stream;
             that.el.play()
         })
     }

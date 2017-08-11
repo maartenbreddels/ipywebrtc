@@ -30,9 +30,8 @@ var MediaStreamModel = widgets.DOMWidgetModel.extend({
         MediaStreamModel.__super__.initialize.apply(this, arguments);
         // we don't have any stream
         //this.stream = Promise.resolve(null)
-        var that = this;
         this.stream = new Promise((resolve, reject) => {
-            that.stream_resolved = resolve;
+            this.stream_resolved = resolve;
         })
     }
 });

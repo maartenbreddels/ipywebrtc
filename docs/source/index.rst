@@ -8,10 +8,14 @@ Welcome to IPyWebRTC's documentation!
 
 IPyWebRTC gives you WebRTC IPython widgets in the Jupyter notebook.
 
+Making a stream out of a video `ipyvolume.mp4 <ipyvolume.mp4>`_ (can be a same origin file for firefox only)
+
+
 .. ipywidgets-display::
     import ipywebrtc
-    video = ipywebrtc.VideoStream(url='https://webrtc.github.io/samples/src/video/chrome.mp4', play=True)
+    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
     video
+
 
 Since video is a widget, we can control the play property using a toggle button.
 
@@ -36,6 +40,17 @@ Making a 'chat room'
     import ipywidgets as widgets
     camera = ipywebrtc.CameraStream()
     room = ipywebrtc.WebRTCRoomMqtt(stream=camera, room='readthedocs')
+    box = widgets.HBox(children=[])
+    widgets.jslink((room, 'streams'), (box, 'children'))
+    box
+
+Using a video as source stream instead of the camera (joining the same room)
+
+.. ipywidgets-display::
+    import ipywebrtc
+    import ipywidgets as widgets
+    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
+    room = ipywebrtc.WebRTCRoomMqtt(stream=video, room='readthedocs')
     box = widgets.HBox(children=[])
     widgets.jslink((room, 'streams'), (box, 'children'))
     box

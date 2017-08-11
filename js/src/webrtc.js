@@ -107,27 +107,7 @@ var VideoStreamModel = MediaStreamModel.extend({
         this.stream = new Promise((resolve, reject) => {
             that.stream_resolved = resolve;
         })
-        if(this.video.captureStream || this.video.mozCaptureStream) {
-            // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-            var make_stream = _.once(_.bind(function() {
-                if(this.video.captureStream) {
-                    this.stream_resolved(this.video.captureStream())
-                } else if(this.video.mozCaptureStream) {
-                    console.info('falling back to mozCaptureStream')
-                    this.stream_resolved(this.video.mozCaptureStream())
-                }
-            }, this))
-            //this.video.oncanplay = make_stream
-            this.video.onplay = make_stream
-            if(this.video.readyState >= 3) {
-                make_stream()
-            }
-            //this.stream = Promise.resolve(this.video.captureStream())
-            this.update_play()
-            this.update_loop()
-        } else {
-            console.log('captureStream not supported for this browser')
-        }
+        this.capture_stream()
         this.on('change:play', this.update_play, this)
         this.on('change:loop', this.update_loop, this)
         add_media_cleanup(function() {
@@ -137,6 +117,31 @@ var VideoStreamModel = MediaStreamModel.extend({
                 stream.getTracks().forEach((track) => track.stop())
             })
         }, this)
+    },
+    capture_stream: function() {
+        if(this.video.captureStream || this.video.mozCaptureStream) {
+            // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+            var make_stream = _.once(_.bind(function() {
+                if(this.video.captureStream) {
+                    console.info('normal captureStream')
+                    this.stream_resolved(this.video.captureStream())
+                } else if(this.video.mozCaptureStream) {
+                    console.info('falling back to mozCaptureStream')
+                    this.stream_resolved(this.video.mozCaptureStream())
+                }
+            }, this))
+            // see https://github.com/webrtc/samples/pull/853
+            this.video.oncanplay = make_stream
+            //this.video.onplay = make_stream
+            if(this.video.readyState >= 3) {
+                make_stream()
+            }
+            //this.stream = Promise.resolve(this.video.captureStream())
+            this.update_play()
+            this.update_loop()
+        } else {
+            console.log('captureStream not supported for this browser')
+        }
     },
     update_play: function() {
         if(this.get('play'))

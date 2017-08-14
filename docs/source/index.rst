@@ -22,7 +22,7 @@ Since video is a widget, we can control the play property using a toggle button.
 .. ipywidgets-display::
     import ipywebrtc
     import ipywidgets as widgets
-    video = ipywebrtc.VideoStream(url='https://webrtc.github.io/samples/src/video/chrome.mp4', play=True)
+    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
     play_button = widgets.ToggleButton(description="Play")
     widgets.jslink((play_button, 'value'), (video, 'play'))
     widgets.VBox(children=[video, play_button])

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import ipywidgets as widgets
 import ipywidgets
-from traittypes import Array
 from traitlets import Unicode, Integer
 import traitlets
 import logging

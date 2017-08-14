@@ -5,4 +5,3 @@ ipywidgets>=7.0.0b7
 traitlets
 nbsphinx
 recommonmark
-traittypes

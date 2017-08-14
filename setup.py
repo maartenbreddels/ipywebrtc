@@ -80,9 +80,9 @@ class NPM(Command):
         npmName = 'npm';
         if platform.system() == 'Windows':
             npmName = 'npm.cmd';
-            
+
         return npmName;
-    
+
     def has_npm(self):
         npmName = self.get_npm_name();
         try:
@@ -138,7 +138,7 @@ setup_args = {
         ]),
     ],
     'install_requires': [
-        'ipywidgets>=7.0.0b1',
+        'ipywidgets>=6.0.0',
     ],
     'packages': find_packages(),
     'zip_safe': False,

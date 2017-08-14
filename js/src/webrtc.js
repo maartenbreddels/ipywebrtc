@@ -1,4 +1,4 @@
-widgets = require("@jupyter-widgets/base")
+widgets = require('jupyter-js-widgets')
 _ = require("underscore")
 require('webrtc-adapter')
 mqtt = require('mqtt')
@@ -208,6 +208,7 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
                 view_name: 'WebRTCPeerView',
                 view_module: 'jupyter-webrtc',
                 view_module_version: semver_range,
+                widget_class: 'webrtc.WebRTCPeerModel', // ipywidgets6
             }, {
                 stream_local: this.get('stream'),
                 id_local: this.get('id'),
@@ -470,6 +471,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
                     view_name: 'MediaStreamView',
                     view_module: 'jupyter-webrtc',
                     view_module_version: semver_range,
+                    widget_class: 'webrtc.MediaStreamModel', // ipywidgets6
                 }).then(function(model) {
                     model.stream = Promise.resolve(evt.stream); // TODO: not nice to just set the promise...
                     that.set('stream_remote', model)

@@ -12,7 +12,7 @@ semver_range_frontend = "~" + ipywebrtc._version.__version_js__
 
 class HasStream:
     pass # to indicate it has a .stream property on the JS side
-@widgets.register
+@widgets.register('webrtc.MediaStream')
 class MediaStream(widgets.DOMWidget, HasStream):
     """Represents a media source."""
 
@@ -23,7 +23,7 @@ class MediaStream(widgets.DOMWidget, HasStream):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-@widgets.register
+@widgets.register('webrtc.VideoStream')
 class VideoStream(MediaStream):
     """Represents a media source by a video."""
     _model_name = Unicode('VideoStreamModel').tag(sync=True)
@@ -32,7 +32,7 @@ class VideoStream(MediaStream):
     play = traitlets.Bool(True).tag(sync=True)
     loop = traitlets.Bool(True).tag(sync=True)
 
-@widgets.register
+@widgets.register('webrtc.CameraStream')
 class CameraStream(MediaStream):
     """Represents a media source by a camera/webcam."""
     _model_name = Unicode('CameraStreamModel').tag(sync=True)
@@ -44,7 +44,7 @@ class CameraStream(MediaStream):
     def close(self):
         self.send({'msg': 'close'})
 
-@widgets.register
+@widgets.register('webrtc.WebRTCPeer')
 class WebRTCPeer(MediaStream):
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_module = Unicode('jupyter-webrtc').tag(sync=True)

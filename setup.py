@@ -129,6 +129,7 @@ setup_args = {
     'version': version_ns['__version__'],
     'description': 'WebRTC for Jupyter notebook/lab',
     'long_description': LONG_DESCRIPTION,
+    'license': 'MIT',
     'include_package_data': True,
     'data_files': [
         ('share/jupyter/nbextensions/jupyter-webrtc', [

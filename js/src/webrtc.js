@@ -219,6 +219,7 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
                 msg.to = from_id
                 this.log('send to peer', msg)
                 //console.log('sending to room', msg, from_id)
+                peer.save_changes()
                 this.room_msg_send(msg)
             }, this)
             return peer

@@ -1,4 +1,4 @@
-widgets = require('jupyter-js-widgets')
+widgets = require('@jupyter-widgets/base')
 _ = require("underscore")
 require('webrtc-adapter')
 mqtt = require('mqtt')

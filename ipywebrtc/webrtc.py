@@ -28,7 +28,7 @@ class VideoStream(MediaStream):
     """Represents a media source by a video."""
     _model_name = Unicode('VideoStreamModel').tag(sync=True)
 
-    url = Unicode('').tag(sync=True)
+    url = Unicode('https://webrtc.github.io/samples/src/video/chrome.mp4').tag(sync=True)
     play = traitlets.Bool(True).tag(sync=True)
     loop = traitlets.Bool(True).tag(sync=True)
 

@@ -89,7 +89,7 @@ var VideoStreamModel = MediaStreamModel.extend({
         return _.extend(MediaStreamModel.prototype.defaults(), {
             _model_name: 'VideoStreamModel',
             //_view_name: 'VideoView',
-            url: 'movie.mp4',
+            url: 'https://webrtc.github.io/samples/src/video/chrome.mp4',
             //controls: true,
             play: true,
             loop: true

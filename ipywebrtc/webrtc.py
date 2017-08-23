@@ -94,3 +94,16 @@ class WebRTCRoomLocal(WebRTCRoom):
 class WebRTCRoomMqtt(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomMqttModel').tag(sync=True)
     server = Unicode('wss://iot.eclipse.org:443/ws').tag(sync=True)
+
+@widgets.register
+class MediaRecorder(widgets.Widget):
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('MediaRecorderModel').tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    stream = traitlets.Instance(object, allow_none=True).tag(sync=True, **ipywidgets.widget_serialization)
+    record = traitlets.Bool(False).tag(sync=True)
+    data = traitlets.Instance(object, help="The video data as a byte string.").tag(sync=True)
+    mime_type = Unicode('video/webm').tag(sync=True)
+    #streaming = traitlets.Bool(False).tag(sync=True)
+    filename =  Unicode('video/webm')
+

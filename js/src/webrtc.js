@@ -608,6 +608,87 @@ var WebRTCPeerView = widgets.DOMWidgetView.extend({
 
 });
 
+var MediaRecorderModel = widgets.DOMWidgetModel.extend({
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_name: 'MediaRecorderModel',
+            //_view_name: 'MediaStreamView',
+            _model_module: 'jupyter-webrtc',
+            //_view_module: 'jupyter-webrtc',
+            _model_module_version: semver_range,
+            //_view_module_version: semver_range,
+            record: false,
+            mime_type: 'video/webm'
+         })
+    },
+    initialize: function() {
+        MediaRecorderModel.__super__.initialize.apply(this, arguments);
+        window.last_media_recorder = this
+        var change_record = () => {
+            if(this.get('record')) {
+                this.record()
+            } else {
+                this.stop()
+            }
+        }
+        this.recorder = null;
+        this.chunks = []
+        this.on('change:record', change_record)
+    },
+    record: function() {
+        console.log('start recording')
+        var streamModel = this.get('stream');
+        if(!streamModel) {
+            console.error('no stream')
+            return
+        }
+        streamModel.stream.then((stream) => {
+            console.log('got stream, firing up recorder')
+            this.recorder = new MediaRecorder(stream, {
+              audioBitsPerSecond : 128000,
+              videoBitsPerSecond : 2500000,
+              mimeType : this.get('mime_type')
+            })
+            this.recorder.start()
+            this.recorder.ondataavailable = (e) => {
+                this.chunks.push(e.data);
+               console.log('got chunk of length', e.data.size)
+            }
+        })
+    },
+    stop: function() {
+        console.log('stopping recorder')
+        this.recorder.onstop = (e) => {
+            var recorder = this.recorder; // keep a local reference
+            var chunks = this.chunks; // and a (shallow) copy of the array of chunks
+            this.recorder = null; // before we set it to null
+            this.chunks = []
+            console.log('assembling blob')
+            var blob = new Blob(chunks, { 'type' : this.get('mime_type') });
+            //var audioURL = window.URL.createObjectURL(blob);
+            //  audio.src = audioURL;
+            window.last_blob = blob;
+            var reader = new FileReader()
+            reader.readAsArrayBuffer(blob)
+            reader.onloadend = () => {
+                window.last_result = reader.result
+                window.last_reader = reader
+                var bytes = new Uint8Array(reader.result)
+                console.log('assembled ', reader.result, reader.result.byteLength, chunks, this.chunks)
+                this.set('data', bytes)
+                this.save_changes()
+            }
+        }
+        this.recorder.stop() 
+    }
+}, {
+serializers: _.extend({
+    stream: { deserialize: widgets.unpack_models },
+    // serialise should be define, otherwise it takes the JSON path
+    data: { deserialize: (v) => v, serialize: (v) => v} ,
+    }, widgets.DOMWidgetModel.serializers)
+});
+
 module.exports = {
     MediaStreamModel: MediaStreamModel,
     MediaStreamView: MediaStreamView,
@@ -618,4 +699,5 @@ module.exports = {
     WebRTCRoomModel: WebRTCRoomModel,
     WebRTCRoomLocalModel: WebRTCRoomLocalModel,
     WebRTCRoomMqttModel: WebRTCRoomMqttModel,
+    MediaRecorderModel:MediaRecorderModel
 }

@@ -51,6 +51,7 @@ class CameraStream(MediaStream):
 
     def close(self):
         self.send({'msg': 'close'})
+        super(CameraStream, self).close()
 
 @widgets.register('webrtc.WebRTCPeer')
 class WebRTCPeer(MediaStream):
@@ -70,6 +71,7 @@ class WebRTCPeer(MediaStream):
 
     def close(self):
         self.send({'msg': 'close'})
+        super(WebRTCPeer, self).close()
 
 class WebRTCRoom(widgets.DOMWidget):
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
@@ -87,6 +89,7 @@ class WebRTCRoom(widgets.DOMWidget):
 
     def close(self):
         self.send({'msg': 'close'})
+        super(WebRTCRoom, self).close()
 
 class WebRTCRoomLocal(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomLocalModel').tag(sync=True)

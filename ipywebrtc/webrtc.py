@@ -29,8 +29,16 @@ class VideoStream(MediaStream):
     _model_name = Unicode('VideoStreamModel').tag(sync=True)
 
     url = Unicode('https://webrtc.github.io/samples/src/video/chrome.mp4').tag(sync=True)
+    data = traitlets.Bytes(None, allow_none=True, help="The image data as a byte string.").tag(sync=True)
     play = traitlets.Bool(True).tag(sync=True)
     loop = traitlets.Bool(True).tag(sync=True)
+    filename = traitlets.Unicode(help="The image filename (will set the .data property)")
+
+    @traitlets.observe('filename')
+    def _propagate_filename(self, change):
+        with open(change.new, 'rb') as f:
+            self.data = f.read()
+
 
 @widgets.register('webrtc.CameraStream')
 class CameraStream(MediaStream):

@@ -92,7 +92,8 @@ var VideoStreamModel = MediaStreamModel.extend({
             url: 'https://webrtc.github.io/samples/src/video/chrome.mp4',
             //controls: true,
             play: true,
-            loop: true
+            loop: true,
+            data: null
         })
     },
     initialize: function() {
@@ -101,8 +102,14 @@ var VideoStreamModel = MediaStreamModel.extend({
         window.last_video = this
         this.video = document.createElement('video')
         this.source = document.createElement('source')
-        this.source.setAttribute('src', this.get('url'))
-        this.video.appendChild(this.source)
+        if(this.get('url')) {
+            this.source.setAttribute('src', this.get('url'))
+            this.video.appendChild(this.source)
+        }
+        if(this.get('data')) {
+            var ar = new Uint8Array(last_video.get('data').buffer)
+            this.video.src = window.URL.createObjectURL(new Blob([ar]));
+        }
         var that = this
         this.stream = new Promise((resolve, reject) => {
             that.stream_resolved = resolve;

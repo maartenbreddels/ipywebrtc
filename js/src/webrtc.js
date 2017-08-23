@@ -585,6 +585,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
 }, {
 serializers: _.extend({
     stream: { deserialize: widgets.unpack_models },
+    peers: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)
 });
 

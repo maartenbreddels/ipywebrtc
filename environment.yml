@@ -1,3 +1,9 @@
+# this is used by repo2docker to get python (and crucially) non-python things
+# like nodejs.
+
+# on mybinder.org's default container, it will be installed into the local
+# conda `root` environment, located in `/opt/conda`
+
 name: ipywebrtc-dev
 
 channels:
@@ -5,8 +11,9 @@ channels:
   - defaults
 
 dependencies:
-  - ipywidgets
-  - nodejs
+  - ipywidgets >=7.1.1,<8
+  - nodejs >=8.9.3
+  - notebook >=5.3.0,<6
   - pip
   - python >=3.6,<3.7
   - setuptools

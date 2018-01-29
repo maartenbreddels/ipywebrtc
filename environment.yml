@@ -1,0 +1,12 @@
+name: ipywebrtc-dev
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - ipywidgets
+  - nodejs
+  - pip
+  - python >=3.6,<3.7
+  - setuptools

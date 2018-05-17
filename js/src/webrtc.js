@@ -141,27 +141,28 @@ var CameraStreamModel = MediaStreamModel.extend({
     defaults: function() {
         return _.extend(MediaStreamModel.prototype.defaults(), {
             _model_name: 'CameraStreamModel',
-            audio: true,
-            video: true
-        })
+            constraints: {audio: true, video: true}
+        });
     },
-    initialize: function() {
-        CameraStreamModel.__super__.initialize.apply(this, arguments);
-        this.stream = navigator.mediaDevices.getUserMedia({audio: this.get('audio'), video: this.get('video')});
-        window.last_camera_stream = this;
-        this.on('msg:custom', _.bind(this.custom_msg, this));
+
+    captureStream: function() {
+        return new Promise((resolve, reject) => {
+            if(!this.cameraStream) {
+                this.cameraStream = navigator.mediaDevices.getUserMedia(this.get('constraints'));
+            }
+            return this.cameraStream;
+        });
     },
-    custom_msg: function(content) {
-        if(content.msg == 'close') {
-            this.close()
-        }
-    },
+
     close: function() {
-        return this.stream.then((stream) => {
-            stream.getTracks().forEach((track) => {
-                track.stop()
-            })
-        })
+        if(this.cameraStream) {
+            this.cameraStream.then((stream) => {
+                stream.getTracks().forEach((track) => {
+                    track.stop();
+                });
+            });
+        }
+        return CameraStreamModel.__super__.close.apply(this, arguments);
     }
 });
 

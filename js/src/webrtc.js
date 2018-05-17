@@ -1,59 +1,140 @@
-widgets = require('@jupyter-widgets/base')
-_ = require("underscore")
-require('webrtc-adapter')
-mqtt = require('mqtt')
+widgets = require('@jupyter-widgets/base');
+_ = require("underscore");
+require('webrtc-adapter');
+mqtt = require('mqtt');
 var semver_range = '~' + require('../package.json').version;
 
 // for dev, when it slows down the browser
-var media_cleanup_callbacks = []
+var media_cleanup_callbacks = [];
 var add_media_cleanup = function(callback, context) {
     media_cleanup_callbacks.push(_.bind(callback, context))
-}
+};
 window.media_cleanup = function() {
     _.each(media_cleanup_callbacks, function(callback) {
-        callback()
-    })
-    media_cleanup_callbacks = []
-}
+        callback();
+    });
+    media_cleanup_callbacks = [];
+};
+
 var MediaStreamModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-            _model_name: 'MediaStreamModel',
-            _view_name: 'MediaStreamView',
             _model_module: 'jupyter-webrtc',
             _view_module: 'jupyter-webrtc',
+            _model_name: 'MediaStreamModel',
+            _view_name: 'MediaStreamView',
             _model_module_version: semver_range,
-             _view_module_version: semver_range,
-         })
+            _view_module_version: semver_range,
+        });
     },
-    initialize: function() {
-        MediaStreamModel.__super__.initialize.apply(this, arguments);
-        // we don't have any stream
-        //this.stream = Promise.resolve(null)
-        this.stream = new Promise((resolve, reject) => {
-            this.stream_resolved = resolve;
-        })
-    }
 });
 
 var MediaStreamView = widgets.DOMWidgetView.extend({
+    render: function() {
+        MediaStreamView.__super__.render.apply(this, arguments);
+        window.last_media_stream_view = this;
+        this.video = document.createElement('video');
+        this.pWidget.addClass('jupyter-widgets');
+        this.pWidget.addClass('widget-image');
 
-    initialize: function() {
-        var el = document.createElement('video')
-        el.setAttribute('autoplay', '')
-        window.last_media_view = this;
-        this.setElement(el);
-        MediaStreamView.__super__.initialize.apply(this, arguments);
+        this.model.captureStream().then((stream) => {
+            this.video.srcObject = stream;
+            this.el.appendChild(this.video);
+            this.video.play();
+        }, (error) => {
+            var text = document.createElement('div');
+            text.innerHTML = 'Error creating view for mediastream: ' + error.message;
+            this.el.appendChild(text);
+        })
     },
 
-    render: function() {
-        var that = this;
-        that.model.stream.then(function(stream) {
-            that.el.srcObject = stream;
-            that.el.play()
-        })
+    remove: function() {
+        this.model.captureStream().then((stream) => {
+            this.video.srcObject = null;
+        });
+        return MediaStreamView.__super__.remove.apply(this, arguments);
     }
+});
 
+var VideoStreamModel = MediaStreamModel.extend({
+    defaults: function() {
+        return _.extend(MediaStreamModel.prototype.defaults(), {
+            _model_name: 'VideoStreamModel',
+            url: 'https://webrtc.github.io/samples/src/video/chrome.mp4',
+            format: 'mp4',
+            value: null,
+            play: true,
+            loop: true,
+        });
+    },
+
+    initialize: function() {
+        VideoStreamModel.__super__.initialize.apply(this, arguments);
+        window.last_video_stream = this;
+        this.video = document.createElement('video');
+        this.source = document.createElement('source');
+
+        var format = this.get('format');
+        var value = this.get('value');
+        if(format != 'url') {
+            var mimeType = 'video/${format}';
+            this.video.src = window.URL.createObjectURL(new Blob([value], {type: mimeType}));
+        } else {
+            var url = String.fromCharCode.apply(null, new Uint8Array(value.buffer));
+            this.source.setAttribute('src', url);
+            this.video.appendChild(this.source);
+        }
+
+        this.on('change:play', this.updatePlay, this)
+        this.on('change:loop', this.updateLoop, this)
+    },
+
+    captureStream: function() {
+        return new Promise((resolve, reject) => {
+            if(this.video.captureStream || this.video.mozCaptureStream) {
+                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+                var makeStream = _.once(_.bind(function() {
+                    if(this.video.captureStream) {
+                        resolve(this.video.captureStream());
+                    } else if(this.video.mozCaptureStream) {
+                        resolve(this.video.mozCaptureStream());
+                    }
+                }, this));
+                // see https://github.com/webrtc/samples/pull/853
+                this.video.oncanplay = makeStream;
+                if(this.video.readyState >= 3) {
+                    makeStream();
+                }
+
+                this.updatePlay();
+                this.updateLoop();
+            } else {
+                reject(new Error('captureStream not supported for this browser'));
+            }
+        });
+    },
+
+    updatePlay: function() {
+        if(this.get('play')) {
+            this.video.play();
+        } else {
+            this.video.pause();
+        }
+    },
+
+    updateLoop: function() {
+        this.video.loop = this.get('loop');
+    },
+
+    close: function() {
+        var returnValue = VideoStreamModel.__super__.close.apply(this, arguments);
+        this.video.pause();
+        if (this.video.src && this.video.src.startsWith('blob:')) {
+            URL.revokeObjectURL(this.video.src);
+        }
+        this.video.src = '';
+        return returnValue;
+    }
 });
 
 var CameraStreamModel = MediaStreamModel.extend({
@@ -81,85 +162,6 @@ var CameraStreamModel = MediaStreamModel.extend({
                 track.stop()
             })
         })
-    }
-});
-
-var VideoStreamModel = MediaStreamModel.extend({
-    defaults: function() {
-        return _.extend(MediaStreamModel.prototype.defaults(), {
-            _model_name: 'VideoStreamModel',
-            //_view_name: 'VideoView',
-            url: 'https://webrtc.github.io/samples/src/video/chrome.mp4',
-            //controls: true,
-            play: true,
-            loop: true,
-            data: null
-        })
-    },
-    initialize: function() {
-        // Get the camera permissions
-        VideoStreamModel.__super__.initialize.apply(this, arguments);
-        window.last_video = this
-        this.video = document.createElement('video')
-        this.source = document.createElement('source')
-        if(this.get('url')) {
-            this.source.setAttribute('src', this.get('url'))
-            this.video.appendChild(this.source)
-        }
-        if(this.get('data')) {
-            var ar = new Uint8Array(last_video.get('data').buffer)
-            this.video.src = window.URL.createObjectURL(new Blob([ar]));
-        }
-        var that = this
-        this.stream = new Promise((resolve, reject) => {
-            that.stream_resolved = resolve;
-        })
-        this.capture_stream()
-        this.on('change:play', this.update_play, this)
-        this.on('change:loop', this.update_loop, this)
-        add_media_cleanup(function() {
-            this.set('play', false)
-            console.log('cleanup: stopped video')
-            this.stream.then((stream) => {
-                stream.getTracks().forEach((track) => track.stop())
-            })
-        }, this)
-    },
-    capture_stream: function() {
-        if(this.video.captureStream || this.video.mozCaptureStream) {
-            // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-            var make_stream = _.once(_.bind(function() {
-                if(this.video.captureStream) {
-                    console.info('normal captureStream')
-                    this.stream_resolved(this.video.captureStream())
-                } else if(this.video.mozCaptureStream) {
-                    console.info('falling back to mozCaptureStream')
-                    this.stream_resolved(this.video.mozCaptureStream())
-                }
-            }, this))
-            // see https://github.com/webrtc/samples/pull/853
-            this.video.oncanplay = make_stream
-            //this.video.onplay = make_stream
-            if(this.video.readyState >= 3) {
-                make_stream()
-            }
-            //this.stream = Promise.resolve(this.video.captureStream())
-            this.update_play()
-            this.update_loop()
-        } else {
-            console.log('captureStream not supported for this browser')
-        }
-    },
-    update_play: function() {
-        if(this.get('play'))
-            this.video.play()
-        else
-            this.video.pause()
-        console.log('play/pause', this.get('play'))
-    },
-    update_loop: function() {
-        this.video.loop = this.get('loop')
-        console.log('loop', this.get('loop'))
     }
 });
 
@@ -679,7 +681,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
                 this.save_changes()
             }
         }
-        this.recorder.stop() 
+        this.recorder.stop()
     }
 }, {
 serializers: _.extend({

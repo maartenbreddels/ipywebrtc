@@ -16,7 +16,7 @@ logger = logging.getLogger("jupyter-webrtc")
 semver_range_frontend = "~" + ipywebrtc._version.__version_js__
 
 
-@register('webrtc.MediaStream')
+@register
 class MediaStream(DOMWidget):
     """Represents a media source.
 
@@ -34,7 +34,7 @@ class MediaStream(DOMWidget):
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
 
-@register('webrtc.VideoStream')
+@register
 class VideoStream(MediaStream):
     """Represents a media source by a video.
 
@@ -115,7 +115,7 @@ class VideoStream(MediaStream):
         return cls(value=urlopen(url).read(), **kwargs)
 
 
-@register('webrtc.CameraStream')
+@register
 class CameraStream(MediaStream):
     """Represents a media source by a camera/webcam/microphone using
     getUserMedia. See
@@ -141,8 +141,9 @@ class CameraStream(MediaStream):
     @classmethod
     def facing_user(cls, audio=True, **kwargs):
         """Convenience method to get the camera facing the user (often front)
-        Paramters
-        ---------
+
+        Parameters
+        ----------
         audio: bool
             Capture audio or not
         kwargs:
@@ -153,8 +154,9 @@ class CameraStream(MediaStream):
     @classmethod
     def facing_environment(cls, audio=True, **kwargs):
         """Convenience method to get the camera facing the environment (often the back)
-        Paramters
-        ---------
+
+        Parameters
+        ----------
         audio: bool
             Capture audio or not
         kwargs:
@@ -174,7 +176,7 @@ class CameraStream(MediaStream):
         return CameraStream(constraints=constraints, **kwargs)
 
 
-@register('webrtc.WebRTCPeer')
+@register
 class WebRTCPeer(MediaStream):
     _view_name = Unicode('WebRTCPeerView').tag(sync=True)
     _model_name = Unicode('WebRTCPeerModel').tag(sync=True)
@@ -189,11 +191,8 @@ class WebRTCPeer(MediaStream):
     def connect(self):
         self.send({'msg': 'connect'})
 
-    def close(self):
-        self.send({'msg': 'close'})
 
-
-@register('webrtc.WebRTCRoom')
+@register
 class WebRTCRoom(MediaStream):
     _model_name = Unicode('WebRTCRoomModel').tag(sync=True)
 
@@ -204,35 +203,27 @@ class WebRTCRoom(MediaStream):
     peers = List(Instance(WebRTCPeer), [], allow_none=False).tag(sync=True, **widget_serialization)
     streams = List(Instance(MediaStream), [], allow_none=False).tag(sync=True, **widget_serialization)
 
-    def close(self):
-        self.send({'msg': 'close'})
 
-
-@register('webrtc.WebRTCRoomLocal')
+@register
 class WebRTCRoomLocal(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomLocalModel').tag(sync=True)
 
 
-@register('webrtc.WebRTCRoomMqtt')
+@register
 class WebRTCRoomMqtt(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomMqttModel').tag(sync=True)
 
     server = Unicode('wss://iot.eclipse.org:443/ws').tag(sync=True)
 
 
-"""
-@register('webrtc.MediaRecorder')
+@register
 class MediaRecorder(widgets.Widget):
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('MediaRecorderModel').tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = traitlets.Instance(object, allow_none=True).tag(
-        sync=True, **ipywidgets.widget_serialization)
-    record = traitlets.Bool(False).tag(sync=True)
-    data = traitlets.Instance(
-        object, help="The video data as a byte string.").tag(sync=True)
+    stream = Instance(object, allow_none=True).tag(sync=True, **widget_serialization)
+    record = Bool(False).tag(sync=True)
+    data = Bytes(help="The video data as a byte string.").tag(sync=True)
     mime_type = Unicode('video/webm').tag(sync=True)
-    #streaming = traitlets.Bool(False).tag(sync=True)
-    filename =  Unicode('video/webm')
-"""
+    filename = Unicode('video/webm')

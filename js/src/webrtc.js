@@ -4,18 +4,6 @@ require('webrtc-adapter');
 mqtt = require('mqtt');
 var semver_range = '~' + require('../package.json').version;
 
-// for dev, when it slows down the browser
-var media_cleanup_callbacks = [];
-var add_media_cleanup = function(callback, context) {
-    media_cleanup_callbacks.push(_.bind(callback, context))
-};
-window.media_cleanup = function() {
-    _.each(media_cleanup_callbacks, function(callback) {
-        callback();
-    });
-    media_cleanup_callbacks = [];
-};
-
 var MediaStreamModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
@@ -146,12 +134,10 @@ var CameraStreamModel = MediaStreamModel.extend({
     },
 
     captureStream: function() {
-        return new Promise((resolve, reject) => {
-            if(!this.cameraStream) {
-                this.cameraStream = navigator.mediaDevices.getUserMedia(this.get('constraints'));
-            }
-            return this.cameraStream;
-        });
+        if(!this.cameraStream) {
+            this.cameraStream = navigator.mediaDevices.getUserMedia(this.get('constraints'));
+        }
+        return this.cameraStream;
     },
 
     close: function() {
@@ -164,6 +150,168 @@ var CameraStreamModel = MediaStreamModel.extend({
         }
         return CameraStreamModel.__super__.close.apply(this, arguments);
     }
+});
+
+var MediaRecorderModel = widgets.DOMWidgetModel.extend({
+    defaults: function() {
+        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
+            _model_module: 'jupyter-webrtc',
+            _view_module: 'jupyter-webrtc',
+            _model_name: 'MediaRecorderModel',
+            _view_name: 'MediaRecorderView',
+            _model_module_version: semver_range,
+            _view_module_version: semver_range,
+            source: null,
+            data: null,
+            filename: 'record',
+            format: 'webm',
+            _recording: false,
+            _video_src: '',
+         })
+    },
+
+    initialize: function() {
+        MediaRecorderModel.__super__.initialize.apply(this, arguments);
+        window.last_media_recorder = this;
+
+        this.on('msg:custom', _.bind(this.handleCustomMessage, this));
+        this.on('change:_recording', this.updateRecord);
+
+        this.mediaRecorder = null;
+        this.chunks = [];
+    },
+
+    handleCustomMessage: function(content) {
+        if (content.msg == 'play') {
+            this.play();
+        } else if(content.msg == 'download') {
+            this.download();
+        }
+    },
+
+    updateRecord: function() {
+        var source = this.get('source');
+        if(!source) {
+            new Error('No source specified');
+            return;
+        }
+
+        if(this.get('_recording')) {
+            this.chunks = [];
+
+            source.captureStream().then((stream) => {
+                this.mediaRecorder = new MediaRecorder(stream, {
+                    audioBitsPerSecond: 128000,
+                    videoBitsPerSecond: 2500000,
+                    mimeType: 'video/' + this.get('format')
+                });
+                this.mediaRecorder.start();
+                this.mediaRecorder.ondataavailable = (event) => {
+                    this.chunks.push(event.data);
+                };
+            });
+        } else {
+            this.mediaRecorder.stop();
+        }
+    },
+
+    play: function() {
+        if (this.chunks.length == 0) {
+            new Error('Nothing to play');
+            return;
+        }
+        if (this.get('_video_src') != '') {
+            URL.revokeObjectURL(this.get('_video_src'));
+        }
+        var buffer = new Blob(this.chunks, {type: 'video/' + this.get('format')});
+        this.set('_video_src', window.URL.createObjectURL(buffer));
+    },
+
+    download: function() {
+        if (this.chunks.length == 0) {
+            new Error('Nothing to download');
+            return;
+        }
+        var blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = this.get('filename');
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    },
+
+    close: function() {
+        if (this.get('_video_src') != '') {
+            URL.revokeObjectURL(this.get('_video_src'));
+        }
+        return MediaRecorderModel.__super__.close.apply(this, arguments);
+    }
+}, {
+serializers: _.extend({
+    source: { deserialize: widgets.unpack_models },
+    }, widgets.DOMWidgetModel.serializers)
+});
+
+var MediaRecorderView = widgets.DOMWidgetView.extend({
+    render: function() {
+        MediaRecorderView.__super__.render.apply(this, arguments);
+
+        this.el.classList.add('jupyter-widgets');
+
+        this.buttons = document.createElement('div');
+        this.buttons.classList.add('widget-inline-hbox');
+        this.buttons.classList.add('widget-play');
+
+        this.recordButton = document.createElement('button');
+        this.playButton = document.createElement('button');
+        this.downloadButton = document.createElement('button');
+        this.video = document.createElement('video');
+
+        this.recordButton.className = 'jupyter-button';
+        this.playButton.className = 'jupyter-button';
+        this.downloadButton.className = 'jupyter-button';
+
+        this.buttons.appendChild(this.recordButton);
+        this.buttons.appendChild(this.playButton);
+        this.buttons.appendChild(this.downloadButton);
+        this.el.appendChild(this.buttons);
+        this.el.appendChild(this.video);
+
+        var recordIcon = document.createElement('i');
+        recordIcon.className = 'fa fa-circle';
+        this.recordButton.appendChild(recordIcon);
+        var playIcon = document.createElement('i');
+        playIcon.className = 'fa fa-play';
+        this.playButton.appendChild(playIcon);
+        var downloadIcon = document.createElement('i');
+        downloadIcon.className = 'fa fa-download';
+        this.downloadButton.appendChild(downloadIcon);
+
+        this.recordButton.onclick = () => {
+            this.model.set('_recording', !this.model.get('_recording'));
+        };
+        this.playButton.onclick = this.model.play.bind(this.model);
+        this.downloadButton.onclick = this.model.download.bind(this.model);
+
+        this.listenTo(this.model, 'change:_recording', () => {
+            if(this.model.get('_recording')) {
+                recordIcon.style.color = 'darkred';
+            } else {
+                recordIcon.style.color = '';
+            }
+        });
+
+        this.listenTo(this.model, 'change:_video_src', () => {
+            this.video.src = this.model.get('_video_src');
+            this.video.play();
+        });
+    },
 });
 
 var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
@@ -611,96 +759,16 @@ var WebRTCPeerView = widgets.DOMWidgetView.extend({
 
 });
 
-var MediaRecorderModel = widgets.DOMWidgetModel.extend({
-    defaults: function() {
-        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-            _model_name: 'MediaRecorderModel',
-            //_view_name: 'MediaStreamView',
-            _model_module: 'jupyter-webrtc',
-            //_view_module: 'jupyter-webrtc',
-            _model_module_version: semver_range,
-            //_view_module_version: semver_range,
-            record: false,
-            mime_type: 'video/webm'
-         })
-    },
-    initialize: function() {
-        MediaRecorderModel.__super__.initialize.apply(this, arguments);
-        window.last_media_recorder = this
-        var change_record = () => {
-            if(this.get('record')) {
-                this.record()
-            } else {
-                this.stop()
-            }
-        }
-        this.recorder = null;
-        this.chunks = []
-        this.on('change:record', change_record)
-    },
-    record: function() {
-        console.log('start recording')
-        var streamModel = this.get('stream');
-        if(!streamModel) {
-            console.error('no stream')
-            return
-        }
-        streamModel.stream.then((stream) => {
-            console.log('got stream, firing up recorder')
-            this.recorder = new MediaRecorder(stream, {
-              audioBitsPerSecond : 128000,
-              videoBitsPerSecond : 2500000,
-              mimeType : this.get('mime_type')
-            })
-            this.recorder.start()
-            this.recorder.ondataavailable = (e) => {
-                this.chunks.push(e.data);
-               console.log('got chunk of length', e.data.size)
-            }
-        })
-    },
-    stop: function() {
-        console.log('stopping recorder')
-        this.recorder.onstop = (e) => {
-            var recorder = this.recorder; // keep a local reference
-            var chunks = this.chunks; // and a (shallow) copy of the array of chunks
-            this.recorder = null; // before we set it to null
-            this.chunks = []
-            console.log('assembling blob')
-            var blob = new Blob(chunks, { 'type' : this.get('mime_type') });
-            //var audioURL = window.URL.createObjectURL(blob);
-            //  audio.src = audioURL;
-            window.last_blob = blob;
-            var reader = new FileReader()
-            reader.readAsArrayBuffer(blob)
-            reader.onloadend = () => {
-                window.last_result = reader.result
-                window.last_reader = reader
-                var bytes = new Uint8Array(reader.result)
-                console.log('assembled ', reader.result, reader.result.byteLength, chunks, this.chunks)
-                this.set('data', bytes)
-                this.save_changes()
-            }
-        }
-        this.recorder.stop()
-    }
-}, {
-serializers: _.extend({
-    stream: { deserialize: widgets.unpack_models },
-    // serialise should be define, otherwise it takes the JSON path
-    data: { deserialize: (v) => v, serialize: (v) => v} ,
-    }, widgets.DOMWidgetModel.serializers)
-});
-
 module.exports = {
     MediaStreamModel: MediaStreamModel,
     MediaStreamView: MediaStreamView,
-    CameraStreamModel: CameraStreamModel,
     VideoStreamModel:VideoStreamModel,
+    CameraStreamModel: CameraStreamModel,
+    MediaRecorderModel: MediaRecorderModel,
+    MediaRecorderView: MediaRecorderView,
     WebRTCPeerModel: WebRTCPeerModel,
     WebRTCPeerView: WebRTCPeerView,
     WebRTCRoomModel: WebRTCRoomModel,
     WebRTCRoomLocalModel: WebRTCRoomLocalModel,
     WebRTCRoomMqttModel: WebRTCRoomMqttModel,
-    MediaRecorderModel:MediaRecorderModel
 }

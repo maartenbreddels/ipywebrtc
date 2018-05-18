@@ -177,6 +177,33 @@ class CameraStream(MediaStream):
 
 
 @register
+class MediaRecorder(DOMWidget):
+    """Creates a recorder which allows to record a MediaStream widget, play the
+    record in the Notebook, and download it.
+    """
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('MediaRecorderModel').tag(sync=True)
+    _view_name = Unicode('MediaRecorderView').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    source = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
+    data = Bytes(help="The video data as a byte string.").tag(sync=True)
+    filename = Unicode('record').tag(sync=True)
+    format = Unicode('webm').tag(sync=True)
+
+    def play(self):
+        self.send({'msg': 'play'})
+
+    def download(self):
+        self.send({'msg': 'download'})
+
+    _recording = Bool(False).tag(sync=True)
+    _video_src = Unicode('').tag(sync=True)
+
+
+@register
 class WebRTCPeer(MediaStream):
     _view_name = Unicode('WebRTCPeerView').tag(sync=True)
     _model_name = Unicode('WebRTCPeerModel').tag(sync=True)
@@ -214,16 +241,3 @@ class WebRTCRoomMqtt(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomMqttModel').tag(sync=True)
 
     server = Unicode('wss://iot.eclipse.org:443/ws').tag(sync=True)
-
-
-@register
-class MediaRecorder(widgets.Widget):
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _model_name = Unicode('MediaRecorderModel').tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-
-    stream = Instance(object, allow_none=True).tag(sync=True, **widget_serialization)
-    record = Bool(False).tag(sync=True)
-    data = Bytes(help="The video data as a byte string.").tag(sync=True)
-    mime_type = Unicode('video/webm').tag(sync=True)
-    filename = Unicode('video/webm')

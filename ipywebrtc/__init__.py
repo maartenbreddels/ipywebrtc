@@ -15,6 +15,7 @@ def _random_room():
 
 def chat(room=None, stream=None, **kwargs):
     from IPython.display import display
+    import ipywidgets as widgets
     if room is None:
         room = _random_room()
         print("room =", room)

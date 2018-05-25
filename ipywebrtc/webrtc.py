@@ -33,6 +33,8 @@ class MediaStream(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
+# for backwards compatibility with ipyvolume
+HasStream = MediaStream
 
 @register
 class VideoStream(MediaStream):

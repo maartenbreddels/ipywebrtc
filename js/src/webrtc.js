@@ -307,8 +307,10 @@ var MediaRecorderView = widgets.DOMWidgetView.extend({
         this.listenTo(this.model, 'change:_recording', () => {
             if(this.model.get('_recording')) {
                 recordIcon.style.color = 'darkred';
+                this.playButton.disabled = true;
             } else {
                 recordIcon.style.color = '';
+                this.playButton.disabled = false;
             }
         });
 

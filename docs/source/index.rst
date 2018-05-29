@@ -12,26 +12,34 @@ Making a stream out of a video `ipyvolume.mp4 <ipyvolume.mp4>`_ (can be a same o
 
 
 .. ipywidgets-display::
-    import ipywebrtc
-    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
+    from ipywebrtc import VideoStream
+    video = VideoStream.from_file('ipyvolume.mp4', play=True)
     video
 
 
 Since video is a widget, we can control the play property using a toggle button.
 
 .. ipywidgets-display::
-    import ipywebrtc
+    from ipywebrtc import VideoStream
     import ipywidgets as widgets
-    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
+    video = VideoStream.from_file('ipyvolume.mp4', play=True)
     play_button = widgets.ToggleButton(description="Play")
     widgets.jslink((play_button, 'value'), (video, 'play'))
     widgets.VBox(children=[video, play_button])
 
-Camera stream:
+Media recorder:
 
 .. ipywidgets-display::
-    import ipywebrtc
-    ipywebrtc.CameraStream()
+    from ipywebrtc import VideoStream, MediaRecorder
+    video = VideoStream.from_file('ipyvolume.mp4', play=True)
+    recorder = MediaRecorder(source=video)
+    recorder
+
+Camera stream (we can use camera facing user or facing environment):
+
+.. ipywidgets-display::
+    from ipywebrtc import CameraStream
+    CameraStream.facing_user()
 
 Making a 'chat room'
 
@@ -49,7 +57,7 @@ Using a video as source stream instead of the camera (joining the same room)
 .. ipywidgets-display::
     import ipywebrtc
     import ipywidgets as widgets
-    video = ipywebrtc.VideoStream(url='ipyvolume.mp4', play=True)
+    video = ipywebrtc.VideoStream.from_file('ipyvolume.mp4', play=True)
     room = ipywebrtc.WebRTCRoomMqtt(stream=video, room='readthedocs')
     box = widgets.HBox(children=[])
     widgets.jslink((room, 'streams'), (box, 'children'))

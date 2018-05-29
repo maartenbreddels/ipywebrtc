@@ -17,6 +17,11 @@ var MediaStreamModel = widgets.DOMWidgetModel.extend({
     },
 });
 
+// Backward compatibility
+Object.defineProperty(MediaStreamModel.prototype, 'stream', {
+    get: function() { return this.captureStream(); }
+});
+
 var MediaStreamView = widgets.DOMWidgetView.extend({
     render: function() {
         MediaStreamView.__super__.render.apply(this, arguments);

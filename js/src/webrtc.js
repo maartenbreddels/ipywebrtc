@@ -639,7 +639,11 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
                     view_module_version: semver_range,
                     widget_class: 'webrtc.MediaStreamModel', // ipywidgets6
                 }).then(function(model) {
-                    model.stream = Promise.resolve(evt.stream); // TODO: not nice to just set the promise...
+                    model.captureStream = (() => {
+                        return new Promise((resolve, reject) => {
+                            resolve(evt.stream);
+                        });
+                    });// TODO: not nice to just set the method...
                     that.set('stream_remote', model)
                     //mo
                     that.save_changes()

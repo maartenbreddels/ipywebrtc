@@ -206,9 +206,13 @@ class MediaRecorder(DOMWidget):
 
 
 @register
-class WebRTCPeer(MediaStream):
+class WebRTCPeer(DOMWidget):
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_name = Unicode('WebRTCPeerView').tag(sync=True)
     _model_name = Unicode('WebRTCPeerModel').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     stream_local = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     stream_remote = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
@@ -222,8 +226,12 @@ class WebRTCPeer(MediaStream):
 
 
 @register
-class WebRTCRoom(MediaStream):
+class WebRTCRoom(DOMWidget):
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('WebRTCRoomModel').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     room = Unicode('room').tag(sync=True)
     stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)

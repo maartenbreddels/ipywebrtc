@@ -22,6 +22,13 @@ Object.defineProperty(MediaStreamModel.prototype, 'stream', {
     get: function() { return this.captureStream(); }
 });
 
+var captureStream = function(widget) {
+    if(widget.captureStream)
+        return widget.captureStream()
+    else
+        return widget.stream
+}
+
 var MediaStreamView = widgets.DOMWidgetView.extend({
     render: function() {
         MediaStreamView.__super__.render.apply(this, arguments);
@@ -204,7 +211,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
         if(this.get('record')) {
             this.chunks = [];
 
-            source.captureStream().then((stream) => {
+            captureStream(source).then((stream) => {
                 this.mediaRecorder = new MediaRecorder(stream, {
                     audioBitsPerSecond: 128000,
                     videoBitsPerSecond: 2500000,

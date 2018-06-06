@@ -6,6 +6,7 @@ try:
 except ImportError:
     from urllib.request import urlopen  # py3
 from traitlets import (
+    observe,
     Bool, Bytes, Dict, Instance, List, Unicode
 )
 from ipywidgets import DOMWidget, register, widget_serialization
@@ -178,6 +179,9 @@ class CameraStream(MediaStream):
         return CameraStream(constraints=constraints, **kwargs)
 
 
+def _memoryview_to_bytes(value, widget=None):
+    return bytes(value)
+
 @register
 class MediaRecorder(DOMWidget):
     """Creates a recorder which allows to record a MediaStream widget, play the
@@ -190,10 +194,18 @@ class MediaRecorder(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    source = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
-    data = Bytes(help="The video data as a byte string.").tag(sync=True)
+    stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
+    data = Bytes(help="The video data as a byte string.").tag(sync=True, from_json=_memoryview_to_bytes)
     filename = Unicode('record').tag(sync=True)
     format = Unicode('webm').tag(sync=True)
+    record = Bool(False).tag(sync=True)
+    autosave = Bool(False).tag(sync=True)
+
+    @observe('data')
+    def _check_autosave(self, change):
+        if len(self.data) and self.autosave:
+            self.save()
+
 
     def play(self):
         self.send({'msg': 'play'})
@@ -201,7 +213,15 @@ class MediaRecorder(DOMWidget):
     def download(self):
         self.send({'msg': 'download'})
 
-    _recording = Bool(False).tag(sync=True)
+    def save(self, filename=None):
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.data) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.data)
+
     _video_src = Unicode('').tag(sync=True)
 
 

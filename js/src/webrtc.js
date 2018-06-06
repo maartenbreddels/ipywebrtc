@@ -166,11 +166,11 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             _view_name: 'MediaRecorderView',
             _model_module_version: semver_range,
             _view_module_version: semver_range,
-            source: null,
+            stream: null,
             data: null,
             filename: 'record',
             format: 'webm',
-            _recording: false,
+            record: false,
             _video_src: '',
          })
     },
@@ -180,7 +180,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
         window.last_media_recorder = this;
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
-        this.on('change:_recording', this.updateRecord);
+        this.on('change:record', this.updateRecord);
 
         this.mediaRecorder = null;
         this.chunks = [];
@@ -195,13 +195,13 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     },
 
     updateRecord: function() {
-        var source = this.get('source');
+        var source = this.get('stream');
         if(!source) {
             new Error('No source specified');
             return;
         }
 
-        if(this.get('_recording')) {
+        if(this.get('record')) {
             this.chunks = [];
 
             source.captureStream().then((stream) => {
@@ -216,6 +216,27 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
                 };
             });
         } else {
+            this.mediaRecorder.onstop = (e) => {
+                var recorder = this.recorder; // keep a local reference
+                var chunks = this.chunks; // and a (shallow) copy of the array of chunks
+                this.recorder = null; // before we set it to null
+                this.chunks = []
+                console.log('assembling blob')
+                var blob = new Blob(chunks, { 'type' : this.get('mime_type') });
+                //var audioURL = window.URL.createObjectURL(blob);
+                //  audio.src = audioURL;
+                window.last_blob = blob;
+                var reader = new FileReader()
+                reader.readAsArrayBuffer(blob)
+                reader.onloadend = () => {
+                    window.last_result = reader.result
+                    window.last_reader = reader
+                    var bytes = new Uint8Array(reader.result)
+                    console.log('assembled ', reader.result, reader.result.byteLength, chunks, this.chunks)
+                    this.set('data', bytes.buffer)
+                    this.save_changes()
+                }
+            }
             this.mediaRecorder.stop();
         }
     },
@@ -259,7 +280,9 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     }
 }, {
 serializers: _.extend({
-    source: { deserialize: widgets.unpack_models },
+    stream: { deserialize: widgets.unpack_models },
+     // we need to specify the identity function, otherwise JSON.parse(JSON.stringify(x)) will be used
+    data: { serialize: (x) => x }
     }, widgets.DOMWidgetModel.serializers)
 });
 
@@ -299,13 +322,13 @@ var MediaRecorderView = widgets.DOMWidgetView.extend({
         this.downloadButton.appendChild(downloadIcon);
 
         this.recordButton.onclick = () => {
-            this.model.set('_recording', !this.model.get('_recording'));
+            this.model.set('record', !this.model.get('record'));
         };
         this.playButton.onclick = this.model.play.bind(this.model);
         this.downloadButton.onclick = this.model.download.bind(this.model);
 
-        this.listenTo(this.model, 'change:_recording', () => {
-            if(this.model.get('_recording')) {
+        this.listenTo(this.model, 'change:record', () => {
+            if(this.model.get('record')) {
                 recordIcon.style.color = 'darkred';
                 this.playButton.disabled = true;
             } else {

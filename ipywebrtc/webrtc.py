@@ -39,11 +39,23 @@ class MediaStream(DOMWidget):
 # for backwards compatibility with ipyvolume
 HasStream = MediaStream
 
+
+@register
+class WidgetStream(MediaStream):
+    """Represents a widget media source.
+    """
+    _model_name = Unicode('WidgetStreamModel').tag(sync=True)
+    _view_name = Unicode('WidgetStreamView').tag(sync=True)
+
+    widget = Instance(DOMWidget, allow_none=False).tag(sync=True, **widget_serialization)
+
+
 class ImageStream(MediaStream):
     """Represent a media stream by a static image"""
     _model_name = Unicode('ImageStreamModel').tag(sync=True)
 
     image = Instance(Image).tag(sync=True, **widget_serialization)
+
 
 @register
 class VideoStream(MediaStream):
@@ -189,6 +201,7 @@ class CameraStream(MediaStream):
 
 def _memoryview_to_bytes(value, widget=None):
     return bytes(value)
+
 
 @register
 class MediaRecorder(DOMWidget):

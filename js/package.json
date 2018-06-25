@@ -60,7 +60,8 @@
     "@jupyter-widgets/base": "^1.0.0",
     "mqtt": "^2.11.0",
     "underscore": "^1.8.3",
-    "webrtc-adapter": "^4.2.2"
+    "webrtc-adapter": "^4.2.2",
+    "html2canvas": "v1.0.0-alpha.12"
   },
   "files": [
     "dist/",

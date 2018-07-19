@@ -224,22 +224,13 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             });
         } else {
             this.mediaRecorder.onstop = (e) => {
-                var recorder = this.recorder; // keep a local reference
-                var chunks = this.chunks; // and a (shallow) copy of the array of chunks
-                this.recorder = null; // before we set it to null
-                this.chunks = []
                 console.log('assembling blob')
-                var blob = new Blob(chunks, { 'type' : this.get('mime_type') });
-                //var audioURL = window.URL.createObjectURL(blob);
-                //  audio.src = audioURL;
-                window.last_blob = blob;
+                var blob = new Blob(this.chunks, { 'type' : this.get('mime_type') });
                 var reader = new FileReader()
                 reader.readAsArrayBuffer(blob)
                 reader.onloadend = () => {
-                    window.last_result = reader.result
-                    window.last_reader = reader
                     var bytes = new Uint8Array(reader.result)
-                    console.log('assembled ', reader.result, reader.result.byteLength, chunks, this.chunks)
+                    console.log('assembled ', reader.result, reader.result.byteLength, this.chunks)
                     this.set('data', bytes.buffer)
                     this.save_changes()
                 }

@@ -45,11 +45,11 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],
+    browsers: ['HeadlessChrome'],
     customLaunchers: {
       HeadlessChrome: {
         base: 'Chrome',
-        flags: ['--disable-gpu', '--remote-debugging-port=9222']
+        flags: ['--headless', '--disable-gpu', '--remote-debugging-port=9222']
       }
     },
     // if true, Karma captures browsers, runs the tests and exits

@@ -1,0 +1,45 @@
+language: c
+os:
+ - linux
+ - osx
+env:
+ matrix:
+  - PYTHON_VERSION=2.7
+  - PYTHON_VERSION=3.4
+  - PYTHON_VERSION=3.5
+  - PYTHON_VERSION=3.6
+matrix:
+  allow_failures:
+    env: PYTHON_VERSION=3.6
+
+addons:
+  chrome: stable
+
+before_install:
+  - if [[ $TRAVIS_OS_NAME == linux ]]; then sudo apt-get update; fi
+  - . $HOME/.nvm/nvm.sh
+  - nvm install stable
+  - nvm use stable
+  - if [[ $TRAVIS_OS_NAME == linux ]]; then wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; fi
+  - if [[ $TRAVIS_OS_NAME == osx ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh; fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n test-environment python=$PYTHON_VERSION numpy scipy runipy
+  - source activate test-environment
+  - conda install -c conda-forge pytest pytest-cov notebook nodejs
+  - pip install coveralls
+
+install:
+  - pip install -e .
+
+script:
+  # - py.test --cov-report= --cov=ipywebrtc ipywebrtc
+  - npm run --prefix js install-test
+#  - runipy examples/examples.ipynb
+
+after_success:
+  coveralls

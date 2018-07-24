@@ -9,9 +9,10 @@ from traitlets import (
     observe,
     Bool, Bytes, Dict, Instance, List, Unicode
 )
-from ipywidgets import DOMWidget, register, widget_serialization
+from ipywidgets import DOMWidget, Image, register, widget_serialization
 from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
+import traitlets
 
 logger = logging.getLogger("jupyter-webrtc")
 semver_range_frontend = "~" + ipywebrtc._version.__version_js__
@@ -36,6 +37,12 @@ class MediaStream(DOMWidget):
 
 # for backwards compatibility with ipyvolume
 HasStream = MediaStream
+
+class ImageStream(MediaStream):
+    """Represent a media stream by a static image"""
+    _model_name = Unicode('ImageStreamModel').tag(sync=True)
+
+    image = Instance(Image).tag(sync=True, **widget_serialization)
 
 @register
 class VideoStream(MediaStream):
@@ -223,6 +230,53 @@ class MediaRecorder(DOMWidget):
             f.write(self.data)
 
     _video_src = Unicode('').tag(sync=True)
+
+
+
+@register
+class MediaImageRecorder(DOMWidget):
+    """Creates a recorder which allows to grab an Image from a MediaStream widget.
+    """
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('MediaImageRecorderModel').tag(sync=True)
+    _view_name = Unicode('MediaImageRecorderView').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
+    image = Instance(Image, allow_none=True).tag(sync=True, **widget_serialization)
+    # instead of data, fomat, we can just rely on using the above widget
+    # if it would serialize it back (but for some reason we need this from_json)
+    data = Bytes(help="The video data as a byte string.").tag(sync=True, from_json=_memoryview_to_bytes)
+    format = Unicode('png').tag(sync=True)
+    filename = Unicode('stream-image').tag(sync=True)
+    # record = Bool(False).tag(sync=True)
+    autosave = Bool(True).tag(sync=True)
+
+    @observe('data')
+    def _check_autosave(self, change):
+        if len(self.data) and self.autosave:
+            self.save()
+
+    @traitlets.default('image')
+    def _default_image(self):
+        return Image()
+
+    def grab(self):
+        self.send({'msg': 'grab'})
+
+    def download(self):
+        self.send({'msg': 'download'})
+
+    def save(self, filename=None):
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.data) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.data)
 
 
 @register

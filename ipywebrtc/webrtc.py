@@ -13,6 +13,7 @@ from ipywidgets import DOMWidget, Image, register, widget_serialization
 from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
+import ipywidgets as widgets
 
 logger = logging.getLogger("jupyter-webrtc")
 semver_range_frontend = "~" + ipywebrtc._version.__version_js__
@@ -233,6 +234,10 @@ class MediaRecorder(DOMWidget):
 
 
 
+# monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146
+if 'from_json' not in widgets.Image.value.metadata:
+    widgets.Image.value.metadata['from_json'] = lambda js, obj: None if js is None else js.tobytes()
+
 @register
 class MediaImageRecorder(DOMWidget):
     """Creates a recorder which allows to grab an Image from a MediaStream widget.
@@ -246,17 +251,21 @@ class MediaImageRecorder(DOMWidget):
 
     stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     image = Instance(Image, allow_none=True).tag(sync=True, **widget_serialization)
-    # instead of data, fomat, we can just rely on using the above widget
-    # if it would serialize it back (but for some reason we need this from_json)
-    data = Bytes(help="The video data as a byte string.").tag(sync=True, from_json=_memoryview_to_bytes)
-    format = Unicode('png').tag(sync=True)
     filename = Unicode('stream-image').tag(sync=True)
-    # record = Bool(False).tag(sync=True)
-    autosave = Bool(True).tag(sync=True)
+    autosave = Bool(False)
 
-    @observe('data')
+    def __init__(self, **kwargs):
+        super(MediaImageRecorder, self).__init__(**kwargs)
+        self.image.observe(self._check_autosave, 'value')
+
+    @observe('image')
+    def _bind_image(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
     def _check_autosave(self, change):
-        if len(self.data) and self.autosave:
+        if len(self.image.value) and self.autosave:
             self.save()
 
     @traitlets.default('image')
@@ -272,11 +281,11 @@ class MediaImageRecorder(DOMWidget):
     def save(self, filename=None):
         filename = filename or self.filename
         if '.' not in filename:
-            filename += '.' + self.format
-        if len(self.data) == 0:
+            filename += '.' + self.image.format
+        if len(self.image.value) == 0:
             raise ValueError('No data, did you record anything?')
         with open(filename, 'wb') as f:
-            f.write(self.data)
+            f.write(self.image.value)
 
 
 @register

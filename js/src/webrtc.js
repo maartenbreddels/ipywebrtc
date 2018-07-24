@@ -223,10 +223,8 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             stream: null,
-            data: null,
-            filename: 'stream-image',
-            format: 'png',
-            image: null
+            image: null,
+            filename: 'stream-image'
          })
     },
     initialize: function() {
@@ -236,7 +234,6 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
         this.last_blob = null;
     },
-
     handleCustomMessage: function(content) {
         if (content.msg == 'grab') {
             this.grab();
@@ -246,25 +243,28 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
         }
     },
     grab: async function() {
+        let image = this.get('image');
+        if(!image)
+            return;
+        let format = image.get('format') || 'png';
+        let mime_type = `image/${format}`
+
+        // turn the mediastream into a video element
         let mediaStream = await captureStream(this.get('stream'));
         let video = document.createElement('video');
         video.srcObject = mediaStream;
         await utils.onCanPlay(video);
         video.play() // required on chrome, otherwise we get a black screen
 
+        // and the video element can be drawn onto a canvas
         let canvas = document.createElement('canvas')
         let context = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        let mime_type = null;
-        if(!mime_type) {
-            mime_type = 'image/png'
-            this.set('format', 'png')
-        }
+
+        // from the canvas we can get the underlying encoded data
         // TODO: check support for toBlob, or find a polyfill
-        // var data = canvas.toDataURL(mime_type);
-        // this.set('data', data);
         canvas.toBlob((blob) => {
             this.last_blob = blob;
             var reader = new FileReader()
@@ -273,13 +273,8 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
                 var bytes = new Uint8Array(reader.result)
                 console.log('assembled ', reader.result, reader.result.byteLength)
                 let dataView = new DataView(bytes.buffer);
-                this.set('data', dataView);
-                this.save_changes()
-                let image = this.get('image');
-                if(image) {
-                    image.set({value: dataView, width: canvas.width, height: canvas.height, format: this.get('format')} );
-                    image.save_changes()
-                }
+                image.set({value: dataView, width: canvas.width, height: canvas.height, format: format});
+                image.save_changes()
                 this.trigger('blob_changed');
             }
         }, mime_type);

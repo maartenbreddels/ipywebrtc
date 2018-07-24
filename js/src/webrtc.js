@@ -432,8 +432,9 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             new Error('Nothing to download');
             return;
         }
-        var blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
-        downloadBlobl(url);
+        let blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
+        let filename = this.get('filename') + '.' + this.get('format');
+        utils.downloadBlob(blob, filename);
     },
 
     close: function() {

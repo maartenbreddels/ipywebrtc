@@ -227,8 +227,6 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
                 var recorder = this.recorder; // keep a local reference
                 var chunks = this.chunks; // and a (shallow) copy of the array of chunks
                 this.recorder = null; // before we set it to null
-                this.chunks = []
-                console.log('assembling blob')
                 var blob = new Blob(chunks, { 'type' : this.get('mime_type') });
                 //var audioURL = window.URL.createObjectURL(blob);
                 //  audio.src = audioURL;
@@ -239,7 +237,6 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
                     window.last_result = reader.result
                     window.last_reader = reader
                     var bytes = new Uint8Array(reader.result)
-                    console.log('assembled ', reader.result, reader.result.byteLength, chunks, this.chunks)
                     this.set('data', bytes.buffer)
                     this.save_changes()
                 }
@@ -249,8 +246,8 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     },
 
     play: function() {
-        if (this.chunks.length == 0) {
-            new Error('Nothing to play');
+        if (this.chunks.length === 0) {
+            throw new Error('Nothing to play');
             return;
         }
         if (this.get('_video_src') != '') {
@@ -261,8 +258,8 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     },
 
     download: function() {
-        if (this.chunks.length == 0) {
-            new Error('Nothing to download');
+        if (this.chunks.length === 0) {
+            throw new Error('Nothing to download');
             return;
         }
         var blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});

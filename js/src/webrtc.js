@@ -429,7 +429,11 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
     },
     download: function() {
         // var blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
-        let filename = this.get('filename') + '.' + this.get('format');
+        let filename = this.get('filename');
+        let format = this.get('image').get('format') || 'png';
+        if (filename.indexOf('.') < 0) {
+          filename = this.get('filename') + '.' + format;
+        }
         utils.downloadBlob(this.last_blob, filename);
     },
 }, {
@@ -581,7 +585,10 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             return;
         }
         let blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
-        let filename = this.get('filename') + '.' + this.get('format');
+        let filename = this.get('filename');
+        if (filename.indexOf('.') < 0) {
+          filename = this.get('filename') + '.' + this.get('format');
+        }
         utils.downloadBlob(blob, filename);
     },
 

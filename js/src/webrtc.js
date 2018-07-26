@@ -110,7 +110,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
             _model_name: 'WidgetStreamModel',
             _view_name: 'WidgetStreamView',
             widget: null,
-            max_fps: 60
+            max_fps: null
         })
     },
 
@@ -145,17 +145,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
             if (capturable_obj) {
                 // TODO: use the fps attr of captureStream once it's here
                 this.captureStream = () => {
-                    return new Promise((resolve, reject) => {
-                        if(capturable_obj.captureStream || capturable_obj.mozCaptureStream) {
-                            if(capturable_obj.captureStream) {
-                                resolve(capturable_obj.captureStream(this.get('max_fps')));
-                            } else if(capturable_obj.mozCaptureStream) {
-                                resolve(capturable_obj.mozCaptureStream(this.get('max_fps')));
-                            }
-                        } else {
-                            reject(new Error('captureStream not supported for this browser'));
-                        }
-                    });
+                    return this._captureStream(capturable_obj);
                 };
 
                 return;
@@ -164,17 +154,8 @@ var WidgetStreamModel = MediaStreamModel.extend({
             // Third case: use html2canvas
             this.canvas = document.createElement('canvas');
             this.captureStream = () => {
-                return new Promise((resolve, reject) => {
-                    if(this.canvas.captureStream || this.canvas.mozCaptureStream) {
-                        if(this.canvas.captureStream) {
-                            resolve(this.canvas.captureStream());
-                        } else if(this.canvas.mozCaptureStream) {
-                            resolve(this.canvas.mozCaptureStream());
-                        }
-                    } else {
-                        reject(new Error('captureStream not supported for this browser'));
-                    }
-                });
+                // TODO: use the fps attr of captureStream once it's here
+                return this._captureStream(this.canvas);
             };
 
             var lastTime;
@@ -186,15 +167,18 @@ var WidgetStreamModel = MediaStreamModel.extend({
                     var timeSinceLastFrame = currentTime - lastTime;
                     lastTime = currentTime;
 
-                    if (this.get('max_fps') == 0) {
+                    var fps = this.get('max_fps');
+                    if (fps == 0) {
                         /* TODO: maybe implement the same behavior as here:
                         https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream */
                     } else {
-                        var waitingTime = 1000/this.get('max_fps') - timeSinceLastFrame;
-                        if (waitingTime < 0) {
-                            waitingTime = 0;
+                        var waitingTime = 0;
+                        if (fps != null) {
+                            waitingTime = 1000/fps - timeSinceLastFrame;
+                            if (waitingTime < 0) {
+                                waitingTime = 0;
+                            }
                         }
-                        console.log('waitingTime:', waitingTime)
 
                         setTimeout(() => {
                             html2canvas(view.el, {
@@ -219,6 +203,30 @@ var WidgetStreamModel = MediaStreamModel.extend({
                 }
             };
             requestAnimationFrame(updateStream);
+        });
+    },
+
+    _captureStream: function(capturable_obj) {
+        return new Promise((resolve, reject) => {
+            var fps = this.get('max_fps');
+
+            if (capturable_obj.captureStream) {
+                if (fps || fps == 0) {
+                    resolve(capturable_obj.captureStream(fps));
+                } else {
+                    resolve(capturable_obj.captureStream());
+                }
+            }
+
+            if (capturable_obj.mozCaptureStream) {
+                if (fps || fps == 0) {
+                    resolve(capturable_obj.mozCaptureStream(fps));
+                } else {
+                    resolve(capturable_obj.mozCaptureStream());
+                }
+            }
+
+            reject(new Error('captureStream not supported for this browser'));
         });
     },
 

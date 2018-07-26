@@ -48,11 +48,11 @@ class WidgetStream(MediaStream):
     _view_name = Unicode('WidgetStreamView').tag(sync=True)
 
     widget = Instance(DOMWidget, allow_none=False).tag(sync=True, **widget_serialization)
-    max_fps = Int(60).tag(sync=True)
+    max_fps = Int(None, allow_none=True).tag(sync=True)
 
     @validate('max_fps')
     def _valid_fps(self, proposal):
-        if proposal['value'] < 0:
+        if proposal['value'] is not None and proposal['value'] < 0:
             raise TraitError('max_fps attribute must be a positive integer')
         return proposal['value']
 

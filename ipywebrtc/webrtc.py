@@ -7,7 +7,7 @@ except ImportError:
     from urllib.request import urlopen  # py3
 from traitlets import (
     observe,
-    Bool, Bytes, Dict, Instance, List, Unicode
+    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate
 )
 from ipywidgets import DOMWidget, Image, register, widget_serialization
 from ipython_genutils.py3compat import string_types
@@ -48,6 +48,13 @@ class WidgetStream(MediaStream):
     _view_name = Unicode('WidgetStreamView').tag(sync=True)
 
     widget = Instance(DOMWidget, allow_none=False).tag(sync=True, **widget_serialization)
+    max_fps = Int(3).tag(sync=True)
+
+    @validate('max_fps')
+    def _valid_fps(self, proposal):
+        if proposal['value'] < 0:
+            raise TraitError('max_fps attribute must be a positive integer')
+        return proposal['value']
 
 
 class ImageStream(MediaStream):

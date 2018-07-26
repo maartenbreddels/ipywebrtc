@@ -110,6 +110,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
             _model_name: 'WidgetStreamModel',
             _view_name: 'WidgetStreamView',
             widget: null,
+            max_fps: 3
         })
     },
 
@@ -118,6 +119,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
 
         // First case: the widget already has a captureStream
         if (typeof this.get('widget').captureStream == 'function') {
+            // TODO: use the fps attr of captureStream once it's here
             this.captureStream = () => {
                 return this.get('widget').captureStream();
             };
@@ -141,13 +143,14 @@ var WidgetStreamModel = MediaStreamModel.extend({
             // Second case: the widget view is a canvas or a video element
             var capturable_obj = this.find_capturable_obj(view.el);
             if (capturable_obj) {
+                // TODO: use the fps attr of captureStream once it's here
                 this.captureStream = () => {
                     return new Promise((resolve, reject) => {
                         if(capturable_obj.captureStream || capturable_obj.mozCaptureStream) {
                             if(capturable_obj.captureStream) {
-                                resolve(capturable_obj.captureStream());
+                                resolve(capturable_obj.captureStream(this.get('max_fps')));
                             } else if(capturable_obj.mozCaptureStream) {
-                                resolve(capturable_obj.mozCaptureStream());
+                                resolve(capturable_obj.mozCaptureStream(this.get('max_fps')));
                             }
                         } else {
                             reject(new Error('captureStream not supported for this browser'));
@@ -160,28 +163,6 @@ var WidgetStreamModel = MediaStreamModel.extend({
 
             // Third case: use html2canvas
             this.canvas = document.createElement('canvas');
-            var updateStream = (el) => {
-                if (!this._closed) {
-                    html2canvas(el, {
-                        canvas: this.canvas,
-                        logging: false,
-                        useCORS: true,
-                        ignoreElements: function(element) {
-                            return !(
-                                // Do not ignore if the element contains what we want to render
-                                element.contains(el) ||
-                                // Do not ignore if the element is contained by what we want to render
-                                el.contains(element) ||
-                                // Do not ignore if the element is contained by the head (style and scripts)
-                                document.head.contains(element)
-                            );
-                        },
-                    }).then(() => {
-                        updateStream(el);
-                    });
-                }
-            };
-
             this.captureStream = () => {
                 return new Promise((resolve, reject) => {
                     if(this.canvas.captureStream || this.canvas.mozCaptureStream) {
@@ -196,9 +177,48 @@ var WidgetStreamModel = MediaStreamModel.extend({
                 });
             };
 
-            return new Promise((resolve, reject) => {
-                updateStream(view.el);
-            });
+            var lastTime;
+            var updateStream = (currentTime) => {
+                if (!this._closed) {
+                    if (!lastTime) {
+                        lastTime = currentTime;
+                    }
+                    var timeSinceLastFrame = currentTime - lastTime;
+                    lastTime = currentTime;
+
+                    if (this.get('max_fps') == 0) {
+                        /* TODO: maybe implement the same behavior as here:
+                        https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream */
+                    } else {
+                        var waitingTime = 1000/this.get('max_fps') - timeSinceLastFrame;
+                        if (waitingTime < 0) {
+                            waitingTime = 0;
+                        }
+                        console.log('waitingTime:', waitingTime)
+
+                        setTimeout(() => {
+                            html2canvas(view.el, {
+                                canvas: this.canvas,
+                                logging: false,
+                                useCORS: true,
+                                ignoreElements: function(element) {
+                                    return !(
+                                        // Do not ignore if the element contains what we want to render
+                                        element.contains(view.el) ||
+                                        // Do not ignore if the element is contained by what we want to render
+                                        view.el.contains(element) ||
+                                        // Do not ignore if the element is contained by the head (style and scripts)
+                                        document.head.contains(element)
+                                    );
+                                },
+                            }).then(() => {
+                                window.requestAnimationFrame(updateStream);
+                            });
+                        }, waitingTime);
+                    }
+                }
+            };
+            requestAnimationFrame(updateStream);
         });
     },
 

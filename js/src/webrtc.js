@@ -110,7 +110,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
             _model_name: 'WidgetStreamModel',
             _view_name: 'WidgetStreamView',
             widget: null,
-            max_fps: 3
+            max_fps: 60
         })
     },
 

@@ -48,7 +48,7 @@ class WidgetStream(MediaStream):
     _view_name = Unicode('WidgetStreamView').tag(sync=True)
 
     widget = Instance(DOMWidget, allow_none=False).tag(sync=True, **widget_serialization)
-    max_fps = Int(3).tag(sync=True)
+    max_fps = Int(60).tag(sync=True)
 
     @validate('max_fps')
     def _valid_fps(self, proposal):

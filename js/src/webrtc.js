@@ -83,8 +83,7 @@ var ImageStreamModel = MediaStreamModel.extend({
     captureStream: function() {
         return new Promise((resolve, reject) => {
             // not sure if firefox uses moz prefix also on a canvas
-            let captureStream = this.canvas.captureStream || this.canvas.mozCaptureStream;
-            if(captureStream) {
+            if(this.canvas.captureStream) {
                 // TODO: add a fps trait
                 resolve(this.canvas.captureStream())
                 // but for some reason we need to do it again

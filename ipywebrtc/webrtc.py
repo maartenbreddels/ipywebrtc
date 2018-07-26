@@ -204,7 +204,7 @@ class MediaRecorder(DOMWidget):
 
     stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     data = Bytes(help="The video data as a byte string.").tag(sync=True, from_json=_memoryview_to_bytes)
-    filename = Unicode('record').tag(sync=True)
+    filename = Unicode('recording').tag(sync=True)
     format = Unicode('webm').tag(sync=True)
     record = Bool(False).tag(sync=True)
     autosave = Bool(False).tag(sync=True)
@@ -251,7 +251,7 @@ class MediaImageRecorder(DOMWidget):
 
     stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     image = Instance(Image, allow_none=True).tag(sync=True, **widget_serialization)
-    filename = Unicode('stream-image').tag(sync=True)
+    filename = Unicode('recording').tag(sync=True)
     autosave = Bool(False)
 
     def __init__(self, **kwargs):

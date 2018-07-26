@@ -1,6 +1,7 @@
 import * as widgets from '@jupyter-widgets/base';
 import * as _  from 'underscore';
 require('webrtc-adapter');
+import * as html2canvas from 'html2canvas';
 import * as mqtt from 'mqtt';
 import * as utils from './utils';
 var semver_range = '~' + require('../package.json').version;
@@ -46,7 +47,7 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
             var text = document.createElement('div');
             text.innerHTML = 'Error creating view for mediastream: ' + error.message;
             this.el.appendChild(text);
-        })
+        });
     },
 
     remove: function() {
@@ -68,7 +69,7 @@ var ImageStreamModel = MediaStreamModel.extend({
     },
 
     initialize: function() {
-        ImageStreamModel.__super__.initialize.apply(this, arguments);
+      ImageStreamModel.__super__.initialize.apply(this, arguments);
         window.last_image_stream = this;
         this.canvas = document.createElement('canvas');
         this.context = this.canvas.getContext('2d');
@@ -78,7 +79,6 @@ var ImageStreamModel = MediaStreamModel.extend({
         // I was hoping this should do it
         imageWidgetToCanvas(this.get('image'), this.canvas)
     },
-
 
     captureStream: function() {
         return new Promise((resolve, reject) => {
@@ -102,6 +102,155 @@ var ImageStreamModel = MediaStreamModel.extend({
     serializers: _.extend({
         image: { deserialize: widgets.unpack_models },
     }, MediaStreamModel.serializers)
+});
+
+var WidgetStreamModel = MediaStreamModel.extend({
+    defaults: function() {
+        return _.extend(MediaStreamModel.prototype.defaults(), {
+            _model_name: 'WidgetStreamModel',
+            _view_name: 'WidgetStreamView',
+            widget: null,
+            max_fps: null
+        })
+    },
+
+    initialize: function() {
+        WidgetStreamModel.__super__.initialize.apply(this, arguments);
+
+        // First case: the widget already has a captureStream
+        if (typeof this.get('widget').captureStream == 'function') {
+            // TODO: use the fps attr of captureStream once it's here
+            this.captureStream = () => {
+                return this.get('widget').captureStream();
+            };
+
+            return;
+        };
+
+        var id_views = Object.keys(this.get('widget').views);
+        if (id_views.length == 0) {
+            this.captureStream = () => {
+                return new Promise((resolve, reject) => {
+                    reject({'message': 'Cannot create WidgetStream if the widget has no view rendered'});
+                });
+            };
+
+            return;
+        }
+
+        var first_view = this.get('widget').views[id_views[0]];
+        return first_view.then((view) => {
+            // Second case: the widget view is a canvas or a video element
+            var capturable_obj = this.find_capturable_obj(view.el);
+            if (capturable_obj) {
+                // TODO: use the fps attr of captureStream once it's here
+                this.captureStream = () => {
+                    return this._captureStream(capturable_obj);
+                };
+
+                return;
+            }
+
+            // Third case: use html2canvas
+            this.canvas = document.createElement('canvas');
+            this.captureStream = () => {
+                // TODO: use the fps attr of captureStream once it's here
+                return this._captureStream(this.canvas);
+            };
+
+            var lastTime;
+            var updateStream = (currentTime) => {
+                if (!this._closed) {
+                    if (!lastTime) {
+                        lastTime = currentTime;
+                    }
+                    var timeSinceLastFrame = currentTime - lastTime;
+                    lastTime = currentTime;
+
+                    var fps = this.get('max_fps');
+                    if (fps == 0) {
+                        /* TODO: maybe implement the same behavior as here:
+                        https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream */
+                    } else {
+                        var waitingTime = 0;
+                        if (fps != null) {
+                            waitingTime = 1000/fps - timeSinceLastFrame;
+                            if (waitingTime < 0) {
+                                waitingTime = 0;
+                            }
+                        }
+
+                        setTimeout(() => {
+                            html2canvas(view.el, {
+                                canvas: this.canvas,
+                                logging: false,
+                                useCORS: true,
+                                ignoreElements: function(element) {
+                                    return !(
+                                        // Do not ignore if the element contains what we want to render
+                                        element.contains(view.el) ||
+                                        // Do not ignore if the element is contained by what we want to render
+                                        view.el.contains(element) ||
+                                        // Do not ignore if the element is contained by the head (style and scripts)
+                                        document.head.contains(element)
+                                    );
+                                },
+                            }).then(() => {
+                                window.requestAnimationFrame(updateStream);
+                            });
+                        }, waitingTime);
+                    }
+                }
+            };
+            requestAnimationFrame(updateStream);
+        });
+    },
+
+    _captureStream: function(capturable_obj) {
+        return new Promise((resolve, reject) => {
+            var fps = this.get('max_fps');
+
+            if (capturable_obj.captureStream) {
+                if (fps || fps == 0) {
+                    resolve(capturable_obj.captureStream(fps));
+                } else {
+                    resolve(capturable_obj.captureStream());
+                }
+            }
+
+            if (capturable_obj.mozCaptureStream) {
+                if (fps || fps == 0) {
+                    resolve(capturable_obj.mozCaptureStream(fps));
+                } else {
+                    resolve(capturable_obj.mozCaptureStream());
+                }
+            }
+
+            reject(new Error('captureStream not supported for this browser'));
+        });
+    },
+
+    find_capturable_obj: function(element) {
+        var nb_children = element.children.length;
+        for (var child_idx = 0; child_idx < nb_children; child_idx++) {
+            var child = element.children[child_idx];
+            if (child.captureStream || child.mozCaptureStream) {
+                return child;
+            }
+
+            var capturable_obj = this.find_capturable_obj(child);
+            if (capturable_obj) {
+                return capturable_obj;
+            }
+        }
+    },
+}, {
+serializers: _.extend({
+    widget: { deserialize: widgets.unpack_models },
+    }, MediaStreamModel.serializers)
+});
+
+var WidgetStreamView = MediaStreamView.extend({
 });
 
 var VideoStreamModel = MediaStreamModel.extend({
@@ -960,6 +1109,8 @@ var WebRTCPeerView = widgets.DOMWidgetView.extend({
 module.exports = {
     MediaStreamModel: MediaStreamModel,
     MediaStreamView: MediaStreamView,
+    WidgetStreamModel: WidgetStreamModel,
+    WidgetStreamView: WidgetStreamView,
     ImageStreamModel: ImageStreamModel,
     VideoStreamModel:VideoStreamModel,
     CameraStreamModel: CameraStreamModel,

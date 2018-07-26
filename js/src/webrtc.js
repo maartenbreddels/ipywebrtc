@@ -1,7 +1,7 @@
 import * as widgets from '@jupyter-widgets/base';
 import * as _  from 'underscore';
 require('webrtc-adapter');
-html2canvas = require('html2canvas');
+import * as html2canvas from 'html2canvas';
 import * as mqtt from 'mqtt';
 import * as utils from './utils';
 var semver_range = '~' + require('../package.json').version;
@@ -202,7 +202,7 @@ var WidgetStreamModel = MediaStreamModel.extend({
         });
     },
 
-    find_capturable_obj(element): function() {
+    find_capturable_obj: function(element) {
         var nb_children = element.children.length;
         for (var child_idx = 0; child_idx < nb_children; child_idx++) {
             var child = element.children[child_idx];

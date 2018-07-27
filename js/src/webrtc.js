@@ -376,7 +376,7 @@ var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
          })
     },
     initialize: function() {
-        MediaRecorderModel.__super__.initialize.apply(this, arguments);
+        MediaImageRecorderModel.__super__.initialize.apply(this, arguments);
         window.last_media_image_recorder = this;
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
@@ -444,7 +444,7 @@ serializers: _.extend({
 
 var MediaImageRecorderView = widgets.DOMWidgetView.extend({
     render: function() {
-        MediaRecorderView.__super__.render.apply(this, arguments);
+        MediaImageRecorderView.__super__.render.apply(this, arguments);
 
         this.el.classList.add('jupyter-widgets');
 

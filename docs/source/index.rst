@@ -6,7 +6,21 @@
 Welcome to IPyWebRTC's documentation!
 =====================================
 
-IPyWebRTC gives you WebRTC IPython widgets in the Jupyter notebook.
+IPyWebRTC exposes the WebRTC and MediaStream Browser-API as IPython widgets in the Jupyter notebook.
+
+
+The currently supported MediaStream (subclasses) are:
+   * :class:`VideoStream`: A video file/data as media stream. [example](VideoStream.ipynb)
+   * :class:`CameraStream`: Webcam/camera as media stream.
+   * :class:`ImageStream`: An image as a static stream.
+   * :class:`WidgetStream`: Arbitrary DOMWidget as stream.
+
+
+A MediaStream can be used with:
+   * :class:`MediaRecorder`: To record a movie
+   * :class:`MediaImageRecorder`: To create images/snapshots.
+   * :class:`WebRTCRoom` (or rather :class:`WebRTCRoomMqtt`): To stream a media stream to a (set of) peers.
+
 
 Making a stream out of a video `ipyvolume.mp4 <ipyvolume.mp4>`_ (can be a same origin file for firefox only)
 
@@ -71,6 +85,7 @@ Using a video as source stream instead of the camera (joining the same room)
    CameraStream.ipynb
    MediaRecorder.ipynb
    MediaImageRecorder.ipynb
+   WidgetStream.ipynb
    api
 
 

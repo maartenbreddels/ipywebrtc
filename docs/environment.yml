@@ -19,4 +19,4 @@ dependencies:
 - nodejs
 - pip
 - pip:
-  - ipywebrtc
+ - ipywebrtc

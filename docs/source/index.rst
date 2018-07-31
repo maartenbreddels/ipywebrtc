@@ -67,6 +67,11 @@ Using a video as source stream instead of the camera (joining the same room)
    :maxdepth: 2
    :caption: Contents:
 
+   VideoStream.ipynb
+   CameraStream.ipynb
+   MediaRecorder.ipynb
+   MediaImageRecorder.ipynb
+   api
 
 
 

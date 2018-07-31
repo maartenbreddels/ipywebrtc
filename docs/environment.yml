@@ -16,3 +16,4 @@ dependencies:
 - recommonmark
 - traitlets
 - ipywidgets
+- nodejs

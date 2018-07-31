@@ -332,6 +332,11 @@ var VideoStreamModel = MediaStreamModel.extend({
         this.video.src = '';
         return returnValue;
     }
+}, {
+    serializers: _.extend({
+         // we need to specify the identity function, otherwise JSON.parse(JSON.stringify(x)) will be used
+        value: { serialize: (x) => x }
+    }, widgets.DOMWidgetModel.serializers)
 });
 
 var CameraStreamModel = MediaStreamModel.extend({

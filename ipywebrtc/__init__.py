@@ -19,6 +19,13 @@ def _random_room():
 
 
 def chat(room=None, stream=None, **kwargs):
+    """Quick setup for a chatroom.
+
+    :param str room: Roomname, if not given, a random sequence is generated and printed.
+    :param MediaStream stream: The media stream to share, if not given a CameraStream will be created.
+    :rtype: WebRTCRoom
+
+    """
     if room is None:
         room = _random_room()
         print("room =", room)

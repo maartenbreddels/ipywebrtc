@@ -27,6 +27,17 @@ class MediaStream(DOMWidget):
     In practice this can a stream coming from an HTMLVideoElement,
     HTMLCanvasElement (could be a WebGL canvas) or a camera/webcam/microphone
     using getUserMedia.
+
+    The currently supported MediaStream (subclasses) are:
+       * :class:`VideoStream`: A video file/data as media stream.
+       * :class:`CameraStream`: Webcam/camera as media stream.
+       * :class:`ImageStream`: An image as a static stream.
+       * :class:`WidgetStream`: Arbitrary DOMWidget as stream.
+
+    A MediaStream can be used with:
+       * :class:`MediaRecorder`: To record a movie
+       * :class:`MediaImageRecorder`: To create images/snapshots.
+       * :class:`WebRTCRoom` (or rather :class:`WebRTCRoomMqtt`): To stream a media stream to a (set of) peers.
     """
 
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
@@ -47,8 +58,11 @@ class WidgetStream(MediaStream):
     _model_name = Unicode('WidgetStreamModel').tag(sync=True)
     _view_name = Unicode('WidgetStreamView').tag(sync=True)
 
-    widget = Instance(DOMWidget, allow_none=False).tag(sync=True, **widget_serialization)
-    max_fps = Int(None, allow_none=True).tag(sync=True)
+    widget = Instance(DOMWidget, allow_none=False, help='An instance of ipywidgets.DOMWidget that will be the source of the MediaStream.')\
+                .tag(sync=True, **widget_serialization)
+    max_fps = Int(None, allow_none=True,
+                help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the valeus is None.")\
+                .tag(sync=True)
 
     @validate('max_fps')
     def _valid_fps(self, proposal):
@@ -61,7 +75,8 @@ class ImageStream(MediaStream):
     """Represent a media stream by a static image"""
     _model_name = Unicode('ImageStreamModel').tag(sync=True)
 
-    image = Instance(Image).tag(sync=True, **widget_serialization)
+    image = Instance(Image, help="An ipywidgets.Image instance that will be the source of the media stream.")\
+            .tag(sync=True, **widget_serialization)
 
 
 @register
@@ -79,8 +94,8 @@ class VideoStream(MediaStream):
 
     format = Unicode('mp4', help="The format of the video.").tag(sync=True)
     value = Bytes(None, allow_none=True, help="The video data as a byte string.").tag(sync=True)
-    play = Bool(True, help='Play video or pause it').tag(sync=True)
-    loop = Bool(True, help='When true, the video will start from the beginning after finishing').tag(sync=True)
+    play = Bool(True, help='Plays the video or pauses it.').tag(sync=True)
+    loop = Bool(True, help='When true, the video will start from the beginning after finishing.').tag(sync=True)
 
     @classmethod
     def from_file(cls, f, **kwargs):
@@ -156,6 +171,7 @@ class CameraStream(MediaStream):
     as in the link above,
     Two convenience methods are avaiable to easily get access to the 'front'
     and 'back' camera, when present
+
     >>> CameraStream.facing_user(audio=False)
     >>> CameraStream.facing_environment(audio=False)
     """
@@ -165,7 +181,7 @@ class CameraStream(MediaStream):
     # see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
     constraints = Dict(
         {'audio': True, 'video': True},
-        help='Constraints for the camera, see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia for details'
+        help='Constraints for the camera, see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia for details.'
         ).tag(sync=True)
 
     @classmethod
@@ -205,7 +221,6 @@ class CameraStream(MediaStream):
         constraints['video']['facingMode'] = facing_mode
         return CameraStream(constraints=constraints, **kwargs)
 
-
 def _memoryview_to_bytes(value, widget=None):
     return bytes(value)
 
@@ -222,12 +237,14 @@ class MediaRecorder(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
-    data = Bytes(help="The video data as a byte string.").tag(sync=True, from_json=_memoryview_to_bytes)
-    filename = Unicode('recording').tag(sync=True)
-    format = Unicode('webm').tag(sync=True)
-    record = Bool(False).tag(sync=True)
-    autosave = Bool(False).tag(sync=True)
+    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
+                .tag(sync=True, **widget_serialization)
+    data = Bytes(help='The byte object containing the video data after the recording finished.')\
+                .tag(sync=True, from_json=_memoryview_to_bytes)
+    filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
+    format = Unicode('webm', help='The format of the recording (e.g. webm/mp4).').tag(sync=True)
+    record = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
+    autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
 
     @observe('data')
     def _check_autosave(self, change):
@@ -236,12 +253,23 @@ class MediaRecorder(DOMWidget):
 
 
     def play(self):
+        """Play the recording"""
         self.send({'msg': 'play'})
 
     def download(self):
+        """Download the recording (usually a popup appears in the browser)"""
         self.send({'msg': 'download'})
 
     def save(self, filename=None):
+        """Save the data to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = MediaRecorder(filename='test', format='mp4')
+        >>> ...
+        >>> recorder.save()  # will save to test.mp4
+        >>> recorder.save('foo')  # will save to foo.mp4
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
         filename = filename or self.filename
         if '.' not in filename:
             filename += '.' + self.format
@@ -269,10 +297,13 @@ class MediaImageRecorder(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
-    image = Instance(Image, allow_none=True).tag(sync=True, **widget_serialization)
-    filename = Unicode('recording').tag(sync=True)
-    autosave = Bool(False)
+    stream = Instance(MediaStream, allow_none=True,
+         help=MediaRecorder.stream.metadata['help'])\
+        .tag(sync=True, **widget_serialization)
+    image = Instance(Image, help='An instance of ipywidgets.Image that will receive the grabbed image.',
+        allow_none=True).tag(sync=True, **widget_serialization)
+    filename = Unicode('recording', help=MediaRecorder.filename.metadata['help']).tag(sync=True)
+    autosave = Bool(False, help=MediaRecorder.autosave.metadata['help'])
 
     def __init__(self, **kwargs):
         super(MediaImageRecorder, self).__init__(**kwargs)
@@ -299,6 +330,15 @@ class MediaImageRecorder(DOMWidget):
         self.send({'msg': 'download'})
 
     def save(self, filename=None):
+        """Save the data to a file, if no filename is given it is based on the filename trait and the image.format.
+
+        >>> recorder = MediaImageRecorder(filename='test', format='png')
+        >>> ...
+        >>> recorder.save()  # will save to test.png
+        >>> recorder.save('foo')  # will save to foo.png
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
         filename = filename or self.filename
         if '.' not in filename:
             filename += '.' + self.image.format
@@ -310,6 +350,7 @@ class MediaImageRecorder(DOMWidget):
 
 @register
 class WebRTCPeer(DOMWidget):
+    """A peer-to-peer webrtc connection"""
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_name = Unicode('WebRTCPeerView').tag(sync=True)
@@ -330,6 +371,8 @@ class WebRTCPeer(DOMWidget):
 
 @register
 class WebRTCRoom(DOMWidget):
+    """A 'chatroom', which consists of a list of :`WebRTCPeer` connections
+    """
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('WebRTCRoomModel').tag(sync=True)
@@ -351,6 +394,17 @@ class WebRTCRoomLocal(WebRTCRoom):
 
 @register
 class WebRTCRoomMqtt(WebRTCRoom):
+    """Use a mqtt server to connect to other peers"""
     _model_name = Unicode('WebRTCRoomMqttModel').tag(sync=True)
 
     server = Unicode('wss://iot.eclipse.org:443/ws').tag(sync=True)
+
+# add all help strings to the __doc__ for the api docstrings
+for name, cls in list(vars().items()):
+    try:
+        if issubclass(cls, traitlets.HasTraits):
+            for trait_name, trait in cls.class_traits().items():
+                if 'help' in trait.metadata:
+                    trait.__doc__ = trait.metadata['help']
+    except TypeError:
+        pass

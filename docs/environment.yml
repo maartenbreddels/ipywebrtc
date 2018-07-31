@@ -18,4 +18,5 @@ dependencies:
 - ipywidgets
 - nodejs
 - pip
- - ipywebrtc
+- pip:
+  - ipywebrtc

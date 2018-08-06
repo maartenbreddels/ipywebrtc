@@ -80,6 +80,35 @@ class ImageStream(MediaStream):
         help="An ipywidgets.Image instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
 
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Create a `ImageStream` from a local file.
+
+        Parameters
+        ----------
+        filename: str
+            The location of a file to read into the value from disk.
+        **kwargs:
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream`.
+        """
+        return cls(image=Image.from_file(filename), **kwargs)
+
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        """Create a `ImageStream` from a url.
+        This will create a `ImageStream` from an Image using its url
+
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be used for the .image trait.
+        **kwargs:
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream`.
+        """
+        return cls(image=Image.from_url(url), **kwargs)
+
 
 @register
 class VideoStream(MediaStream):
@@ -92,7 +121,6 @@ class VideoStream(MediaStream):
         help="An ipywidgets.Video instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
     play = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
-    loop = Bool(True, help="When true, the video will start from the beginning after finishing")
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -110,14 +138,9 @@ class VideoStream(MediaStream):
         if kwargs.get('play') is not None:
             autoplay = kwargs.get('play')
 
-        loop = True
-        if kwargs.get('loop') is not None:
-            loop = kwargs.get('loop')
-
         video = Video.from_file(
             filename,
             autoplay=autoplay,
-            loop=loop,
             controls=False
         )
 
@@ -140,33 +163,75 @@ class VideoStream(MediaStream):
         if kwargs.get('play') is not None:
             autoplay = kwargs.get('play')
 
-        loop = True
-        if kwargs.get('loop') is not None:
-            loop = kwargs.get('loop')
-
         video = Video.from_url(
             url,
             autoplay=autoplay,
-            loop=loop,
             controls=False
         )
 
         return cls(video=video, **kwargs)
-
-    @observe('loop')
-    def _observe_loop(self, change):
-        self.video.loop = change['new']
 
 
 @register
 class AudioStream(MediaStream):
     """Represent a stream of an audio element"""
     _model_name = Unicode('AudioStreamModel').tag(sync=True)
+    _view_name = Unicode('AudioStreamView').tag(sync=True)
 
     audio = Instance(
         Audio,
         help="An ipywidgets.Audio instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
+    play = Bool(True, help='Plays the audiostream or pauses it.').tag(sync=True)
+
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Create a `AudioStream` from a local file.
+
+        Parameters
+        ----------
+        filename: str
+            The location of a file to read into the audio value from disk.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream`.
+        """
+        autoplay = True
+        if kwargs.get('play') is not None:
+            autoplay = kwargs.get('play')
+
+        audio = Audio.from_file(
+            filename,
+            autoplay=autoplay,
+            controls=False
+        )
+
+        return cls(audio=audio, **kwargs)
+
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        """Create a `AudioStream` from a url.
+        This will create a `AudioStream` from an Audio using its url
+
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be used for the .audio trait.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream`.
+        """
+        autoplay = True
+        if kwargs.get('play') is not None:
+            autoplay = kwargs.get('play')
+
+        audio = Audio.from_url(
+            url,
+            autoplay=autoplay,
+            controls=False
+        )
+
+        return cls(audio=audio, **kwargs)
 
 
 @register
@@ -230,6 +295,7 @@ class CameraStream(MediaStream):
         constraints['video']['facingMode'] = facing_mode
         return CameraStream(constraints=constraints, **kwargs)
 
+
 def _memoryview_to_bytes(value, widget=None):
     return bytes(value)
 
@@ -260,7 +326,6 @@ class MediaRecorder(DOMWidget):
         if len(self.data) and self.autosave:
             self.save()
 
-
     def play(self):
         """Play the recording"""
         self.send({'msg': 'play'})
@@ -290,10 +355,10 @@ class MediaRecorder(DOMWidget):
     _video_src = Unicode('').tag(sync=True)
 
 
-
 # monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146
 if 'from_json' not in widgets.Image.value.metadata:
     widgets.Image.value.metadata['from_json'] = lambda js, obj: None if js is None else js.tobytes()
+
 
 @register
 class MediaImageRecorder(DOMWidget):

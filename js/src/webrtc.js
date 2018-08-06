@@ -39,8 +39,6 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
         this.pWidget.addClass('jupyter-widgets');
         this.pWidget.addClass('widget-image');
 
-        console.log("rendering view")
-
         this.model.captureStream().then((stream) => {
             this.video.srcObject = stream;
             this.el.appendChild(this.video);
@@ -168,6 +166,98 @@ var VideoStreamModel = MediaStreamModel.extend({
     serializers: _.extend({
         video: { deserialize: widgets.unpack_models },
     }, MediaStreamModel.serializers)
+});
+
+var AudioStreamModel = MediaStreamModel.extend({
+    defaults: function() {
+        return _.extend(MediaStreamModel.prototype.defaults(), {
+            _model_name: 'AudioStreamModel',
+            _view_name: 'AudioStreamView',
+            audio: undefined,
+            play: true,
+        });
+    },
+
+    initialize: function() {
+        AudioStreamModel.__super__.initialize.apply(this, arguments);
+        window.last_audio_stream = this;
+
+        this.audio = undefined;
+
+        this.on('change:play', this.updatePlay, this)
+
+        return this.widget_manager.create_view(this.get('audio')).then((view) => {
+            this.audio_wid = view;
+            this.audio = this.audio_wid.el;
+        });
+    },
+
+    captureStream: function() {
+        return new Promise((resolve, reject) => {
+            if(this.audio.captureStream || this.audio.mozCaptureStream) {
+                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+                var makeStream = _.once(_.bind(function() {
+                    if(this.audio.captureStream) {
+                        resolve(this.audio.captureStream());
+                    } else if(this.audio.mozCaptureStream) {
+                        resolve(this.audio.mozCaptureStream());
+                    }
+                }, this));
+                // see https://github.com/webrtc/samples/pull/853
+                this.audio.oncanplay = makeStream;
+                if(this.audio.readyState >= 3) {
+                    makeStream();
+                }
+            } else {
+                reject(new Error('captureStream not supported for this browser'));
+            }
+        });
+    },
+
+    updatePlay: function() {
+        if(this.get('play')) {
+            this.audio.play();
+        } else {
+            this.audio.pause();
+        }
+    },
+
+    close: function() {
+        var returnValue = AudioStreamModel.__super__.close.apply(this, arguments);
+        this.audio_wid.close();
+        return returnValue;
+    }
+}, {
+    serializers: _.extend({
+        audio: { deserialize: widgets.unpack_models },
+    }, MediaStreamModel.serializers)
+});
+
+var AudioStreamView = widgets.DOMWidgetView.extend({
+    render: function() {
+        AudioStreamView.__super__.render.apply(this, arguments);
+        window.last_audio_stream_view = this;
+        this.audio = document.createElement('audio');
+        this.audio.controls = true;
+        this.pWidget.addClass('jupyter-widgets');
+
+        this.model.captureStream().then((stream) => {
+            this.audio.srcObject = stream;
+            this.el.appendChild(this.audio);
+            this.audio.play();
+        }, (error) => {
+            var text = document.createElement('div');
+            text.innerHTML = 'Error creating view for mediastream: ' + error.message;
+            this.el.appendChild(text);
+        });
+    },
+
+    remove: function() {
+        this.model.captureStream().then((stream) => {
+            this.audio.srcObject = null;
+        });
+        return MediaStreamView.__super__.remove.apply(this, arguments);
+    }
 });
 
 var WidgetStreamModel = MediaStreamModel.extend({
@@ -1104,7 +1194,9 @@ module.exports = {
     WidgetStreamModel: WidgetStreamModel,
     WidgetStreamView: WidgetStreamView,
     ImageStreamModel: ImageStreamModel,
-    VideoStreamModel:VideoStreamModel,
+    VideoStreamModel: VideoStreamModel,
+    AudioStreamModel: AudioStreamModel,
+    AudioStreamView: AudioStreamView,
     CameraStreamModel: CameraStreamModel,
     MediaImageRecorderModel: MediaImageRecorderModel,
     MediaImageRecorderView: MediaImageRecorderView,

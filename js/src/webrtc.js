@@ -39,6 +39,8 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
         this.pWidget.addClass('jupyter-widgets');
         this.pWidget.addClass('widget-image');
 
+        console.log("rendering view")
+
         this.model.captureStream().then((stream) => {
             this.video.srcObject = stream;
             this.el.appendChild(this.video);
@@ -101,6 +103,70 @@ var ImageStreamModel = MediaStreamModel.extend({
 }, {
     serializers: _.extend({
         image: { deserialize: widgets.unpack_models },
+    }, MediaStreamModel.serializers)
+});
+
+var VideoStreamModel = MediaStreamModel.extend({
+    defaults: function() {
+        return _.extend(MediaStreamModel.prototype.defaults(), {
+            _model_name: 'VideoStreamModel',
+            video: undefined,
+            play: true,
+        });
+    },
+
+    initialize: function() {
+        VideoStreamModel.__super__.initialize.apply(this, arguments);
+        window.last_video_stream = this;
+
+        this.video = undefined;
+
+        this.on('change:play', this.updatePlay, this)
+
+        return this.widget_manager.create_view(this.get('video')).then((view) => {
+            this.video_wid = view;
+            this.video = this.video_wid.el;
+        });
+    },
+
+    captureStream: function() {
+        return new Promise((resolve, reject) => {
+            if(this.video.captureStream || this.video.mozCaptureStream) {
+                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+                var makeStream = _.once(_.bind(function() {
+                    if(this.video.captureStream) {
+                        resolve(this.video.captureStream());
+                    } else if(this.video.mozCaptureStream) {
+                        resolve(this.video.mozCaptureStream());
+                    }
+                }, this));
+                // see https://github.com/webrtc/samples/pull/853
+                this.video.oncanplay = makeStream;
+                if(this.video.readyState >= 3) {
+                    makeStream();
+                }
+            } else {
+                reject(new Error('captureStream not supported for this browser'));
+            }
+        });
+    },
+
+    updatePlay: function() {
+        if(this.get('play')) {
+            this.video.play();
+        } else {
+            this.video.pause();
+        }
+    },
+
+    close: function() {
+        var returnValue = VideoStreamModel.__super__.close.apply(this, arguments);
+        this.video_wid.close();
+        return returnValue;
+    }
+}, {
+    serializers: _.extend({
+        video: { deserialize: widgets.unpack_models },
     }, MediaStreamModel.serializers)
 });
 
@@ -251,92 +317,6 @@ serializers: _.extend({
 });
 
 var WidgetStreamView = MediaStreamView.extend({
-});
-
-var VideoStreamModel = MediaStreamModel.extend({
-    defaults: function() {
-        return _.extend(MediaStreamModel.prototype.defaults(), {
-            _model_name: 'VideoStreamModel',
-            url: 'https://webrtc.github.io/samples/src/video/chrome.mp4',
-            format: 'mp4',
-            value: null,
-            play: true,
-            loop: true,
-        });
-    },
-
-    initialize: function() {
-        VideoStreamModel.__super__.initialize.apply(this, arguments);
-        window.last_video_stream = this;
-        this.video = document.createElement('video');
-        this.source = document.createElement('source');
-
-        var format = this.get('format');
-        var value = this.get('value');
-        if(format != 'url') {
-            var mimeType = 'video/${format}';
-            this.video.src = window.URL.createObjectURL(new Blob([value], {type: mimeType}));
-        } else {
-            var url = String.fromCharCode.apply(null, new Uint8Array(value.buffer));
-            this.source.setAttribute('src', url);
-            this.video.appendChild(this.source);
-        }
-
-        this.on('change:play', this.updatePlay, this)
-        this.on('change:loop', this.updateLoop, this)
-    },
-
-    captureStream: function() {
-        return new Promise((resolve, reject) => {
-            if(this.video.captureStream || this.video.mozCaptureStream) {
-                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                var makeStream = _.once(_.bind(function() {
-                    if(this.video.captureStream) {
-                        resolve(this.video.captureStream());
-                    } else if(this.video.mozCaptureStream) {
-                        resolve(this.video.mozCaptureStream());
-                    }
-                }, this));
-                // see https://github.com/webrtc/samples/pull/853
-                this.video.oncanplay = makeStream;
-                if(this.video.readyState >= 3) {
-                    makeStream();
-                }
-
-                this.updatePlay();
-                this.updateLoop();
-            } else {
-                reject(new Error('captureStream not supported for this browser'));
-            }
-        });
-    },
-
-    updatePlay: function() {
-        if(this.get('play')) {
-            this.video.play();
-        } else {
-            this.video.pause();
-        }
-    },
-
-    updateLoop: function() {
-        this.video.loop = this.get('loop');
-    },
-
-    close: function() {
-        var returnValue = VideoStreamModel.__super__.close.apply(this, arguments);
-        this.video.pause();
-        if (this.video.src && this.video.src.startsWith('blob:')) {
-            URL.revokeObjectURL(this.video.src);
-        }
-        this.video.src = '';
-        return returnValue;
-    }
-}, {
-    serializers: _.extend({
-         // we need to specify the identity function, otherwise JSON.parse(JSON.stringify(x)) will be used
-        value: { serialize: (x) => x }
-    }, widgets.DOMWidgetModel.serializers)
 });
 
 var CameraStreamModel = MediaStreamModel.extend({

@@ -9,7 +9,7 @@ from traitlets import (
     observe,
     Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate
 )
-from ipywidgets import DOMWidget, Image, register, widget_serialization
+from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
 from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
@@ -75,89 +75,98 @@ class ImageStream(MediaStream):
     """Represent a media stream by a static image"""
     _model_name = Unicode('ImageStreamModel').tag(sync=True)
 
-    image = Instance(Image, help="An ipywidgets.Image instance that will be the source of the media stream.")\
-            .tag(sync=True, **widget_serialization)
+    image = Instance(
+        Image,
+        help="An ipywidgets.Image instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
 
 
 @register
 class VideoStream(MediaStream):
-    """Represents a media source by a video.
-
-    The `value` of this widget accepts a byte string. The byte string is the
-    raw video data that you want the browser to display.  You can explicitly
-    define the format of the byte string using the `format` trait (which
-    defaults to 'mp4').
-    If you pass `"url"` to the `"format"` trait, `value` will be interpreted
-    as a URL as bytes encoded in ascii.
-    """
+    """Represent a stream of a video element"""
     _model_name = Unicode('VideoStreamModel').tag(sync=True)
 
-    format = Unicode('mp4', help="The format of the video.").tag(sync=True)
-    value = Bytes(None, allow_none=True, help="The video data as a byte string.").tag(sync=True)
-    play = Bool(True, help='Plays the video or pauses it.').tag(sync=True)
-    loop = Bool(True, help='When true, the video will start from the beginning after finishing.').tag(sync=True)
+    video = Instance(
+        Video,
+        allow_none=False,
+        help="An ipywidgets.Video instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
+    play = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
+    loop = Bool(True, help="When true, the video will start from the beginning after finishing")
 
     @classmethod
-    def from_file(cls, f, **kwargs):
-        """Create a `VideoStream` from a local file or file object.
+    def from_file(cls, filename, **kwargs):
+        """Create a `VideoStream` from a local file.
 
         Parameters
         ----------
-        f: str or file
-            The path or file object that will be read and its bytes assigned
-            to the value trait.
+        filename: str
+            The location of a file to read into the value from disk.
         **kwargs:
             Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set from the content of a file.
+        Returns an `VideoStream`.
         """
-        if isinstance(f, string_types):
-            with open(f, 'rb') as f:
-                return cls(value=f.read(), **kwargs)
-        else:
-            if 'format' not in kwargs:
-                ext = os.path.splitext(f)[1]
-                if ext:
-                    kwargs['format'] = ext[1:]  # remove the .
-            return cls(value=f.read(), **kwargs)
+        autoplay = True
+        if kwargs.get('play') is not None:
+            autoplay = kwargs.get('play')
+
+        loop = True
+        if kwargs.get('loop') is not None:
+            loop = kwargs.get('loop')
+
+        video = Video.from_file(
+            filename,
+            autoplay=autoplay,
+            loop=loop,
+            controls=False
+        )
+
+        return cls(video=video, **kwargs)
 
     @classmethod
     def from_url(cls, url, **kwargs):
         """Create a `VideoStream` from a url.
-        This wil set the .value trait to the url, and the .format trait to
-        'url'
+        This will create a `VideoStream` from a Video using its url
 
         Parameters
         ----------
         url: str
-            The url of the file that will be assigned to the value trait.
+            The url of the file that will be used for the .video trait.
         **kwargs:
             Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set to the url.
+        Returns an `VideoStream`.
         """
-        kwargs = dict(kwargs)
-        kwargs['format'] = 'url'
-        # for now we only support ascii
-        return cls(value=url.encode('ascii'), **kwargs)
+        autoplay = True
+        if kwargs.get('play') is not None:
+            autoplay = kwargs.get('play')
 
-    @classmethod
-    def from_download(cls, url, **kwargs):
-        """Create a `VideoStream` from a url by downloading
+        loop = True
+        if kwargs.get('loop') is not None:
+            loop = kwargs.get('loop')
 
-        Parameters
-        ----------
-        url: str
-            The url of the file that will be downloadeded and its bytes
-            assigned to the value trait.
-        **kwargs:
-            Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set from the content of a url.
-        """
-        if 'format' not in kwargs:
-            ext = os.path.splitext(url)[1]
-            if ext:
-                kwargs = dict(kwargs)
-                kwargs['format'] = ext[1:]  # remove the .
-        return cls(value=urlopen(url).read(), **kwargs)
+        video = Video.from_url(
+            url,
+            autoplay=autoplay,
+            loop=loop,
+            controls=False
+        )
+
+        return cls(video=video, **kwargs)
+
+    @observe('loop')
+    def _observe_loop(self, change):
+        self.video.loop = change['new']
+
+
+@register
+class AudioStream(MediaStream):
+    """Represent a stream of an audio element"""
+    _model_name = Unicode('AudioStreamModel').tag(sync=True)
+
+    audio = Instance(
+        Audio,
+        help="An ipywidgets.Audio instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
 
 
 @register

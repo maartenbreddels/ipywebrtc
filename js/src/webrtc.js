@@ -568,34 +568,29 @@ var MediaImageRecorderView = widgets.DOMWidgetView.extend({
 });
 
 
-var VideoRecorderModel = widgets.DOMWidgetModel.extend({
+var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
             _model_module: 'jupyter-webrtc',
             _view_module: 'jupyter-webrtc',
-            _model_name: 'VideoRecorderModel',
-            _view_name: 'VideoRecorderView',
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             stream: null,
             data: null,
             filename: 'record',
-            format: 'webm',
             record: false,
             _data_src: '',
          })
     },
 
     initialize: function() {
-        VideoRecorderModel.__super__.initialize.apply(this, arguments);
-        window.last_media_recorder = this;
+        MediaRecorderModel.__super__.initialize.apply(this, arguments);
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
         this.on('change:record', this.updateRecord);
 
         this.mediaRecorder = null;
         this.chunks = [];
-        this.type = 'video';
     },
 
     handleCustomMessage: function(content) {
@@ -662,7 +657,7 @@ var VideoRecorderModel = widgets.DOMWidgetModel.extend({
         if (this.get('_data_src') != '') {
             URL.revokeObjectURL(this.get('_data_src'));
         }
-        return VideoRecorderModel.__super__.close.apply(this, arguments);
+        return MediaRecorderModel.__super__.close.apply(this, arguments);
     }
 }, {
 serializers: _.extend({
@@ -672,15 +667,9 @@ serializers: _.extend({
     }, widgets.DOMWidgetModel.serializers)
 });
 
-var VideoRecorderView = widgets.DOMWidgetView.extend({
-    initialize: function() {
-        VideoRecorderView.__super__.initialize.apply(this, arguments);
-        this.tag = 'video';
-        this.recordIconClass = 'fa fa-circle';
-    },
-
+var MediaRecorderView = widgets.DOMWidgetView.extend({
     render: function() {
-        VideoRecorderView.__super__.render.apply(this, arguments);
+        MediaRecorderView.__super__.render.apply(this, arguments);
 
         this.el.classList.add('jupyter-widgets');
 
@@ -727,6 +716,31 @@ var VideoRecorderView = widgets.DOMWidgetView.extend({
                 this.result.play();
             }
         });
+    },
+});
+
+var VideoRecorderModel = MediaRecorderModel.extend({
+    defaults: function() {
+        return _.extend(MediaRecorderModel.prototype.defaults(), {
+            _model_name: 'VideoRecorderModel',
+            _view_name: 'VideoRecorderView',
+            format: 'webm',
+         })
+    },
+
+    initialize: function() {
+        VideoRecorderModel.__super__.initialize.apply(this, arguments);
+        window.last_video_recorder = this;
+
+        this.type = 'video';
+    },
+});
+
+var VideoRecorderView = MediaRecorderView.extend({
+    initialize: function() {
+        VideoRecorderView.__super__.initialize.apply(this, arguments);
+        this.tag = 'video';
+        this.recordIconClass = 'fa fa-circle';
     },
 });
 

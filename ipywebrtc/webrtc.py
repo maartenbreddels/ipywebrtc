@@ -307,6 +307,7 @@ class Recorder(DOMWidget):
     data = Bytes(help='The byte object containing the video data after the recording finished.')\
                 .tag(sync=True, from_json=_memoryview_to_bytes)
     filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
+    format = Unicode('webm', help='The format of the recording.').tag(sync=True)
     record = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
     _data_src = Unicode('').tag(sync=True)
@@ -351,8 +352,6 @@ class VideoRecorder(Recorder):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    format = Unicode('webm', help='The format of the recording (e.g. webm/mp4).').tag(sync=True)
-
     @validate('stream')
     def _valid_stream(self, proposal):
         stream = proposal['value']
@@ -360,13 +359,45 @@ class VideoRecorder(Recorder):
                 isinstance(stream, WidgetStream) or
                 isinstance(stream, CameraStream) or
                 isinstance(stream, ImageStream)):
-            raise TraitError('Cannot record a video from {} instance'.format())
+            raise TraitError('Cannot record a video from {} instance'.format(
+                proposal['value'].__class__
+            ))
         return proposal['value']
 
     def get_record(self):
         #  Better to create Video "from data" instead of "from url" in case the
         #  url gets revoked
         return Video(value=self.data, format=self.format, controls=True)
+
+
+@register
+class AudioRecorder(Recorder):
+    """Creates a recorder which allows to record the Audio of a MediaStream widget, play the
+    record in the Notebook, and download it or turn it into an Audio widget.
+    """
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('AudioRecorderModel').tag(sync=True)
+    _view_name = Unicode('AudioRecorderView').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    @validate('stream')
+    def _valid_stream(self, proposal):
+        stream = proposal['value']
+        if not (isinstance(stream, VideoStream) or
+                isinstance(stream, AudioStream) or
+                isinstance(stream, WidgetStream) or
+                isinstance(stream, CameraStream)):
+            raise TraitError('Cannot record an Audio from {} instance'.format(
+                proposal['value'].__class__
+            ))
+        return proposal['value']
+
+    def get_record(self):
+        #  Better to create Audio "from data" instead of "from url" in case the
+        #  url gets revoked
+        return Audio(value=self.data, format=self.format, controls=True)
 
 
 # monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146

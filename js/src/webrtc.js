@@ -578,6 +578,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             stream: null,
             data: null,
             filename: 'record',
+            format: 'webm',
             record: false,
             _data_src: '',
          })
@@ -724,7 +725,6 @@ var VideoRecorderModel = MediaRecorderModel.extend({
         return _.extend(MediaRecorderModel.prototype.defaults(), {
             _model_name: 'VideoRecorderModel',
             _view_name: 'VideoRecorderView',
-            format: 'webm',
          })
     },
 
@@ -740,6 +740,30 @@ var VideoRecorderView = MediaRecorderView.extend({
     initialize: function() {
         VideoRecorderView.__super__.initialize.apply(this, arguments);
         this.tag = 'video';
+        this.recordIconClass = 'fa fa-circle';
+    },
+});
+
+var AudioRecorderModel = MediaRecorderModel.extend({
+    defaults: function() {
+        return _.extend(MediaRecorderModel.prototype.defaults(), {
+            _model_name: 'AudioRecorderModel',
+            _view_name: 'AudioRecorderView',
+         })
+    },
+
+    initialize: function() {
+        AudioRecorderModel.__super__.initialize.apply(this, arguments);
+        window.last_audio_recorder = this;
+
+        this.type = 'audio';
+    },
+});
+
+var AudioRecorderView = MediaRecorderView.extend({
+    initialize: function() {
+        AudioRecorderView.__super__.initialize.apply(this, arguments);
+        this.tag = 'audio';
         this.recordIconClass = 'fa fa-circle';
     },
 });
@@ -1207,6 +1231,8 @@ module.exports = {
     MediaImageRecorderView: MediaImageRecorderView,
     VideoRecorderModel: VideoRecorderModel,
     VideoRecorderView: VideoRecorderView,
+    AudioRecorderModel: AudioRecorderModel,
+    AudioRecorderView: AudioRecorderView,
     WebRTCPeerModel: WebRTCPeerModel,
     WebRTCPeerView: WebRTCPeerView,
     WebRTCRoomModel: WebRTCRoomModel,

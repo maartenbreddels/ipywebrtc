@@ -94,12 +94,12 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'alabaster'
-# try:
-# 	import sphinx_rtd_theme
-# 	html_theme = "sphinx_rtd_theme"
-# 	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-# except:
-# 	print "rtd theme not found"
+try:
+	import sphinx_rtd_theme
+	html_theme = "sphinx_rtd_theme"
+	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+except:
+	print "rtd theme not found"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -168,3 +168,5 @@ texinfo_documents = [
      author, 'ipywebrtc', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+nbsphinx_allow_errors = True

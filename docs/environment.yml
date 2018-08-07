@@ -1,0 +1,22 @@
+name: ipywebrtc_docs
+channels:
+- conda-forge
+- defaults
+dependencies:
+- jupyter_sphinx
+- ipywidgets
+- nbformat
+- nbsphinx
+- notebook>=4.2
+- python=3.6
+- sphinx>=1.4.6
+- sphinx_rtd_theme
+- tornado
+- python-dateutil
+- recommonmark
+- traitlets
+- ipywidgets
+- nodejs
+- pip
+- pip:
+  - ipywebrtc

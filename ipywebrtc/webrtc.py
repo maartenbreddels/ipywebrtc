@@ -135,9 +135,7 @@ class VideoStream(MediaStream):
             Extra keyword arguments for `VideoStream`
         Returns an `VideoStream`.
         """
-        autoplay = kwargs.get('play', True)
-        video = Video.from_file(filename, autoplay=autoplay, controls=False)
-
+        video = Video.from_file(filename, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
 
     @classmethod
@@ -153,9 +151,7 @@ class VideoStream(MediaStream):
             Extra keyword arguments for `VideoStream`
         Returns an `VideoStream`.
         """
-        autoplay = kwargs.get('play', True)
-        video = Video.from_url(url, autoplay=autoplay, controls=False)
-
+        video = Video.from_url(url, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
 
 
@@ -183,9 +179,7 @@ class AudioStream(MediaStream):
             Extra keyword arguments for `AudioStream`
         Returns an `AudioStream`.
         """
-        autoplay = kwargs.get('play', True)
-        audio = Audio.from_file(filename, autoplay=autoplay, controls=False)
-
+        audio = Audio.from_file(filename, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
 
     @classmethod
@@ -201,9 +195,7 @@ class AudioStream(MediaStream):
             Extra keyword arguments for `AudioStream`
         Returns an `AudioStream`.
         """
-        autoplay = kwargs.get('play', True)
-        audio = Audio.from_url(url, autoplay=autoplay, controls=False)
-
+        audio = Audio.from_url(url, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
 
 

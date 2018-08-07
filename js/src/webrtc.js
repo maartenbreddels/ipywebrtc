@@ -104,12 +104,78 @@ var ImageStreamModel = MediaStreamModel.extend({
     }, MediaStreamModel.serializers)
 });
 
-var VideoStreamModel = MediaStreamModel.extend({
+var StreamModel = MediaStreamModel.extend({
     defaults: function() {
         return _.extend(MediaStreamModel.prototype.defaults(), {
+            play: true,
+        });
+    },
+
+    initialize: function() {
+        StreamModel.__super__.initialize.apply(this, arguments);
+
+        this.media = undefined;
+
+        this.on('change:play', this.updatePlay, this)
+    },
+
+    captureStream: function() {
+        if (!this.createView) {
+            this.createView = _.once(() => {
+                return this.widget_manager.create_view(this.get(this.type)).then((view) => {
+                    this.media_wid = view;
+                    this.media = this.media_wid.el;
+                    console.log('Create Video view')
+                });
+            });
+        }
+
+        return new Promise((resolve, reject) => {
+            this.createView().then(() => {
+                if(this.media.captureStream || this.media.mozCaptureStream) {
+                    // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+                    var makeStream = () => {
+                        this.updatePlay();
+
+                        if(this.media.captureStream) {
+                            resolve(this.media.captureStream());
+                        } else if(this.media.mozCaptureStream) {
+                            resolve(this.media.mozCaptureStream());
+                        }
+                    };
+                    // see https://github.com/webrtc/samples/pull/853
+                    this.media.oncanplay = makeStream;
+                    if(this.media.readyState >= 3) {
+                        makeStream();
+                    }
+                } else {
+                    reject(new Error('captureStream not supported for this browser'));
+                }
+            });
+        });
+    },
+
+    updatePlay: function() {
+        if(this.get('play')) {
+            this.media.play();
+        } else {
+            this.media.pause();
+        }
+    },
+
+    close: function() {
+        var returnValue = StreamModel.__super__.close.apply(this, arguments);
+        this.media.pause();
+        this.media_wid.close();
+        return returnValue;
+    }
+});
+
+var VideoStreamModel = StreamModel.extend({
+    defaults: function() {
+        return _.extend(StreamModel.prototype.defaults(), {
             _model_name: 'VideoStreamModel',
             video: undefined,
-            play: true,
         });
     },
 
@@ -117,52 +183,8 @@ var VideoStreamModel = MediaStreamModel.extend({
         VideoStreamModel.__super__.initialize.apply(this, arguments);
         window.last_video_stream = this;
 
-        this.video = undefined;
-
-        this.on('change:play', this.updatePlay, this)
-
-        return this.widget_manager.create_view(this.get('video')).then((view) => {
-            this.video_wid = view;
-            this.video = this.video_wid.el;
-        });
+        this.type = 'video';
     },
-
-    captureStream: function() {
-        return new Promise((resolve, reject) => {
-            if(this.video.captureStream || this.video.mozCaptureStream) {
-                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                var makeStream = _.once(_.bind(function() {
-                    if(this.video.captureStream) {
-                        resolve(this.video.captureStream());
-                    } else if(this.video.mozCaptureStream) {
-                        resolve(this.video.mozCaptureStream());
-                    }
-                }, this));
-                // see https://github.com/webrtc/samples/pull/853
-                this.video.oncanplay = makeStream;
-                if(this.video.readyState >= 3) {
-                    makeStream();
-                }
-            } else {
-                reject(new Error('captureStream not supported for this browser'));
-            }
-        });
-    },
-
-    updatePlay: function() {
-        if(this.get('play')) {
-            this.video.play();
-        } else {
-            this.video.pause();
-        }
-    },
-
-    close: function() {
-        var returnValue = VideoStreamModel.__super__.close.apply(this, arguments);
-        this.video.pause();
-        this.video_wid.close();
-        return returnValue;
-    }
 }, {
     serializers: _.extend({
         video: { deserialize: widgets.unpack_models },
@@ -175,7 +197,6 @@ var AudioStreamModel = MediaStreamModel.extend({
             _model_name: 'AudioStreamModel',
             _view_name: 'AudioStreamView',
             audio: undefined,
-            play: true,
         });
     },
 
@@ -183,51 +204,8 @@ var AudioStreamModel = MediaStreamModel.extend({
         AudioStreamModel.__super__.initialize.apply(this, arguments);
         window.last_audio_stream = this;
 
-        this.audio = undefined;
-
-        this.on('change:play', this.updatePlay, this)
-
-        return this.widget_manager.create_view(this.get('audio')).then((view) => {
-            this.audio_wid = view;
-            this.audio = this.audio_wid.el;
-        });
+        this.type = 'audio';
     },
-
-    captureStream: function() {
-        return new Promise((resolve, reject) => {
-            if(this.audio.captureStream || this.audio.mozCaptureStream) {
-                // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                var makeStream = _.once(_.bind(function() {
-                    if(this.audio.captureStream) {
-                        resolve(this.audio.captureStream());
-                    } else if(this.audio.mozCaptureStream) {
-                        resolve(this.audio.mozCaptureStream());
-                    }
-                }, this));
-                // see https://github.com/webrtc/samples/pull/853
-                this.audio.oncanplay = makeStream;
-                if(this.audio.readyState >= 3) {
-                    makeStream();
-                }
-            } else {
-                reject(new Error('captureStream not supported for this browser'));
-            }
-        });
-    },
-
-    updatePlay: function() {
-        if(this.get('play')) {
-            this.audio.play();
-        } else {
-            this.audio.pause();
-        }
-    },
-
-    close: function() {
-        var returnValue = AudioStreamModel.__super__.close.apply(this, arguments);
-        this.audio_wid.close();
-        return returnValue;
-    }
 }, {
     serializers: _.extend({
         audio: { deserialize: widgets.unpack_models },
@@ -568,7 +546,7 @@ var MediaImageRecorderView = widgets.DOMWidgetView.extend({
 });
 
 
-var MediaRecorderModel = widgets.DOMWidgetModel.extend({
+var RecorderModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
             _model_module: 'jupyter-webrtc',
@@ -585,7 +563,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     },
 
     initialize: function() {
-        MediaRecorderModel.__super__.initialize.apply(this, arguments);
+        RecorderModel.__super__.initialize.apply(this, arguments);
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
         this.on('change:record', this.updateRecord);
@@ -658,7 +636,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
         if (this.get('_data_src') != '') {
             URL.revokeObjectURL(this.get('_data_src'));
         }
-        return MediaRecorderModel.__super__.close.apply(this, arguments);
+        return RecorderModel.__super__.close.apply(this, arguments);
     }
 }, {
 serializers: _.extend({
@@ -668,9 +646,9 @@ serializers: _.extend({
     }, widgets.DOMWidgetModel.serializers)
 });
 
-var MediaRecorderView = widgets.DOMWidgetView.extend({
+var RecorderView = widgets.DOMWidgetView.extend({
     render: function() {
-        MediaRecorderView.__super__.render.apply(this, arguments);
+        RecorderView.__super__.render.apply(this, arguments);
 
         this.el.classList.add('jupyter-widgets');
 
@@ -720,9 +698,9 @@ var MediaRecorderView = widgets.DOMWidgetView.extend({
     },
 });
 
-var VideoRecorderModel = MediaRecorderModel.extend({
+var VideoRecorderModel = RecorderModel.extend({
     defaults: function() {
-        return _.extend(MediaRecorderModel.prototype.defaults(), {
+        return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'VideoRecorderModel',
             _view_name: 'VideoRecorderView',
          })
@@ -736,7 +714,7 @@ var VideoRecorderModel = MediaRecorderModel.extend({
     },
 });
 
-var VideoRecorderView = MediaRecorderView.extend({
+var VideoRecorderView = RecorderView.extend({
     initialize: function() {
         VideoRecorderView.__super__.initialize.apply(this, arguments);
         this.tag = 'video';
@@ -744,9 +722,9 @@ var VideoRecorderView = MediaRecorderView.extend({
     },
 });
 
-var AudioRecorderModel = MediaRecorderModel.extend({
+var AudioRecorderModel = RecorderModel.extend({
     defaults: function() {
-        return _.extend(MediaRecorderModel.prototype.defaults(), {
+        return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'AudioRecorderModel',
             _view_name: 'AudioRecorderView',
          })
@@ -760,7 +738,7 @@ var AudioRecorderModel = MediaRecorderModel.extend({
     },
 });
 
-var AudioRecorderView = MediaRecorderView.extend({
+var AudioRecorderView = RecorderView.extend({
     initialize: function() {
         AudioRecorderView.__super__.initialize.apply(this, arguments);
         this.tag = 'audio';

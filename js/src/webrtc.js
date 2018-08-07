@@ -134,19 +134,21 @@ var StreamModel = MediaStreamModel.extend({
             this.createView().then(() => {
                 if(this.media.captureStream || this.media.mozCaptureStream) {
                     // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                    var makeStream = () => {
-                        this.updatePlay();
+                    if (!this.makeStream) {
+                        this.makeStream = _.once(() => {
+                            this.updatePlay();
 
-                        if(this.media.captureStream) {
-                            resolve(this.media.captureStream());
-                        } else if(this.media.mozCaptureStream) {
-                            resolve(this.media.mozCaptureStream());
-                        }
-                    };
+                            if(this.media.captureStream) {
+                                resolve(this.media.captureStream());
+                            } else if(this.media.mozCaptureStream) {
+                                resolve(this.media.mozCaptureStream());
+                            }
+                        });
+                    }
                     // see https://github.com/webrtc/samples/pull/853
-                    this.media.oncanplay = makeStream;
+                    this.media.oncanplay = this.makeStream;
                     if(this.media.readyState >= 3) {
-                        makeStream();
+                        this.makeStream();
                     }
                 } else {
                     reject(new Error('captureStream not supported for this browser'));

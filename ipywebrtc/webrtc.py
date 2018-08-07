@@ -352,18 +352,6 @@ class VideoRecorder(Recorder):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    @validate('stream')
-    def _valid_stream(self, proposal):
-        stream = proposal['value']
-        if not (isinstance(stream, VideoStream) or
-                isinstance(stream, WidgetStream) or
-                isinstance(stream, CameraStream) or
-                isinstance(stream, ImageStream)):
-            raise TraitError('Cannot record a video from {} instance'.format(
-                proposal['value'].__class__
-            ))
-        return proposal['value']
-
     def get_record(self):
         #  Better to create Video "from data" instead of "from url" in case the
         #  url gets revoked
@@ -381,18 +369,6 @@ class AudioRecorder(Recorder):
     _view_name = Unicode('AudioRecorderView').tag(sync=True)
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-
-    @validate('stream')
-    def _valid_stream(self, proposal):
-        stream = proposal['value']
-        if not (isinstance(stream, VideoStream) or
-                isinstance(stream, AudioStream) or
-                isinstance(stream, WidgetStream) or
-                isinstance(stream, CameraStream)):
-            raise TraitError('Cannot record an Audio from {} instance'.format(
-                proposal['value'].__class__
-            ))
-        return proposal['value']
 
     def get_record(self):
         #  Better to create Audio "from data" instead of "from url" in case the

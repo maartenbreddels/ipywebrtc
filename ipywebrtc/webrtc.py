@@ -135,15 +135,8 @@ class VideoStream(MediaStream):
             Extra keyword arguments for `VideoStream`
         Returns an `VideoStream`.
         """
-        autoplay = True
-        if kwargs.get('play') is not None:
-            autoplay = kwargs.get('play')
-
-        video = Video.from_file(
-            filename,
-            autoplay=autoplay,
-            controls=False
-        )
+        autoplay = kwargs.get('play', True)
+        video = Video.from_file(filename, autoplay=autoplay, controls=False)
 
         return cls(video=video, **kwargs)
 
@@ -160,15 +153,8 @@ class VideoStream(MediaStream):
             Extra keyword arguments for `VideoStream`
         Returns an `VideoStream`.
         """
-        autoplay = True
-        if kwargs.get('play') is not None:
-            autoplay = kwargs.get('play')
-
-        video = Video.from_url(
-            url,
-            autoplay=autoplay,
-            controls=False
-        )
+        autoplay = kwargs.get('play', True)
+        video = Video.from_url(url, autoplay=autoplay, controls=False)
 
         return cls(video=video, **kwargs)
 
@@ -197,15 +183,8 @@ class AudioStream(MediaStream):
             Extra keyword arguments for `AudioStream`
         Returns an `AudioStream`.
         """
-        autoplay = True
-        if kwargs.get('play') is not None:
-            autoplay = kwargs.get('play')
-
-        audio = Audio.from_file(
-            filename,
-            autoplay=autoplay,
-            controls=False
-        )
+        autoplay = kwargs.get('play', True)
+        audio = Audio.from_file(filename, autoplay=autoplay, controls=False)
 
         return cls(audio=audio, **kwargs)
 
@@ -222,15 +201,8 @@ class AudioStream(MediaStream):
             Extra keyword arguments for `AudioStream`
         Returns an `AudioStream`.
         """
-        autoplay = True
-        if kwargs.get('play') is not None:
-            autoplay = kwargs.get('play')
-
-        audio = Audio.from_url(
-            url,
-            autoplay=autoplay,
-            controls=False
-        )
+        autoplay = kwargs.get('play', True)
+        audio = Audio.from_url(url, autoplay=autoplay, controls=False)
 
         return cls(audio=audio, **kwargs)
 

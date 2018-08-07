@@ -159,6 +159,7 @@ var VideoStreamModel = MediaStreamModel.extend({
 
     close: function() {
         var returnValue = VideoStreamModel.__super__.close.apply(this, arguments);
+        this.video.pause();
         this.video_wid.close();
         return returnValue;
     }
@@ -567,13 +568,13 @@ var MediaImageRecorderView = widgets.DOMWidgetView.extend({
 });
 
 
-var MediaRecorderModel = widgets.DOMWidgetModel.extend({
+var VideoRecorderModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
         return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
             _model_module: 'jupyter-webrtc',
             _view_module: 'jupyter-webrtc',
-            _model_name: 'MediaRecorderModel',
-            _view_name: 'MediaRecorderView',
+            _model_name: 'VideoRecorderModel',
+            _view_name: 'VideoRecorderView',
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             stream: null,
@@ -581,12 +582,12 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             filename: 'record',
             format: 'webm',
             record: false,
-            _video_src: '',
+            _data_src: '',
          })
     },
 
     initialize: function() {
-        MediaRecorderModel.__super__.initialize.apply(this, arguments);
+        VideoRecorderModel.__super__.initialize.apply(this, arguments);
         window.last_media_recorder = this;
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
@@ -594,12 +595,11 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
 
         this.mediaRecorder = null;
         this.chunks = [];
+        this.type = 'video';
     },
 
     handleCustomMessage: function(content) {
-        if (content.msg == 'play') {
-            this.play();
-        } else if(content.msg == 'download') {
+        if(content.msg == 'download') {
             this.download();
         }
     },
@@ -607,7 +607,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     updateRecord: function() {
         var source = this.get('stream');
         if(!source) {
-            new Error('No source specified');
+            new Error('No stream specified');
             return;
         }
 
@@ -618,7 +618,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
                 this.mediaRecorder = new MediaRecorder(stream, {
                     audioBitsPerSecond: 128000,
                     videoBitsPerSecond: 2500000,
-                    mimeType: 'video/' + this.get('format')
+                    mimeType: this.type + '/' + this.get('format')
                 });
                 this.mediaRecorder.start();
                 this.mediaRecorder.ondataavailable = (event) => {
@@ -627,31 +627,22 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             });
         } else {
             this.mediaRecorder.onstop = (e) => {
-                console.log('assembling blob')
-                var blob = new Blob(this.chunks, { 'type' : this.get('mime_type') });
-                var reader = new FileReader()
-                reader.readAsArrayBuffer(blob)
+                if (this.get('_data_src') != '') {
+                    URL.revokeObjectURL(this.get('_data_src'));
+                }
+                var blob = new Blob(this.chunks, { 'type' : this.type + '/' + this.get('format') });
+                this.set('_data_src', window.URL.createObjectURL(blob));
+
+                var reader = new FileReader();
+                reader.readAsArrayBuffer(blob);
                 reader.onloadend = () => {
-                    var bytes = new Uint8Array(reader.result)
-                    console.log('assembled ', reader.result, reader.result.byteLength, this.chunks)
+                    var bytes = new Uint8Array(reader.result);
                     this.set('data', new DataView(bytes.buffer));
-                    this.save_changes()
+                    this.save_changes();
                 }
             }
             this.mediaRecorder.stop();
         }
-    },
-
-    play: function() {
-        if (this.chunks.length == 0) {
-            new Error('Nothing to play');
-            return;
-        }
-        if (this.get('_video_src') != '') {
-            URL.revokeObjectURL(this.get('_video_src'));
-        }
-        var buffer = new Blob(this.chunks, {type: 'video/' + this.get('format')});
-        this.set('_video_src', window.URL.createObjectURL(buffer));
     },
 
     download: function() {
@@ -659,7 +650,7 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
             new Error('Nothing to download');
             return;
         }
-        let blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
+        let blob = new Blob(this.chunks, {type: this.type + '/' + this.get('format')});
         let filename = this.get('filename');
         if (filename.indexOf('.') < 0) {
           filename = this.get('filename') + '.' + this.get('format');
@@ -668,10 +659,10 @@ var MediaRecorderModel = widgets.DOMWidgetModel.extend({
     },
 
     close: function() {
-        if (this.get('_video_src') != '') {
-            URL.revokeObjectURL(this.get('_video_src'));
+        if (this.get('_data_src') != '') {
+            URL.revokeObjectURL(this.get('_data_src'));
         }
-        return MediaRecorderModel.__super__.close.apply(this, arguments);
+        return VideoRecorderModel.__super__.close.apply(this, arguments);
     }
 }, {
 serializers: _.extend({
@@ -681,9 +672,15 @@ serializers: _.extend({
     }, widgets.DOMWidgetModel.serializers)
 });
 
-var MediaRecorderView = widgets.DOMWidgetView.extend({
+var VideoRecorderView = widgets.DOMWidgetView.extend({
+    initialize: function() {
+        VideoRecorderView.__super__.initialize.apply(this, arguments);
+        this.tag = 'video';
+        this.recordIconClass = 'fa fa-circle';
+    },
+
     render: function() {
-        MediaRecorderView.__super__.render.apply(this, arguments);
+        VideoRecorderView.__super__.render.apply(this, arguments);
 
         this.el.classList.add('jupyter-widgets');
 
@@ -692,26 +689,21 @@ var MediaRecorderView = widgets.DOMWidgetView.extend({
         this.buttons.classList.add('widget-play');
 
         this.recordButton = document.createElement('button');
-        this.playButton = document.createElement('button');
         this.downloadButton = document.createElement('button');
-        this.video = document.createElement('video');
+        this.result = document.createElement(this.tag);
+        this.result.controls = true;
 
         this.recordButton.className = 'jupyter-button';
-        this.playButton.className = 'jupyter-button';
         this.downloadButton.className = 'jupyter-button';
 
         this.buttons.appendChild(this.recordButton);
-        this.buttons.appendChild(this.playButton);
         this.buttons.appendChild(this.downloadButton);
         this.el.appendChild(this.buttons);
-        this.el.appendChild(this.video);
+        this.el.appendChild(this.result);
 
         var recordIcon = document.createElement('i');
-        recordIcon.className = 'fa fa-circle';
+        recordIcon.className = this.recordIconClass;
         this.recordButton.appendChild(recordIcon);
-        var playIcon = document.createElement('i');
-        playIcon.className = 'fa fa-play';
-        this.playButton.appendChild(playIcon);
         var downloadIcon = document.createElement('i');
         downloadIcon.className = 'fa fa-download';
         this.downloadButton.appendChild(downloadIcon);
@@ -719,22 +711,21 @@ var MediaRecorderView = widgets.DOMWidgetView.extend({
         this.recordButton.onclick = () => {
             this.model.set('record', !this.model.get('record'));
         };
-        this.playButton.onclick = this.model.play.bind(this.model);
         this.downloadButton.onclick = this.model.download.bind(this.model);
 
         this.listenTo(this.model, 'change:record', () => {
             if(this.model.get('record')) {
                 recordIcon.style.color = 'darkred';
-                this.playButton.disabled = true;
             } else {
                 recordIcon.style.color = '';
-                this.playButton.disabled = false;
             }
         });
 
-        this.listenTo(this.model, 'change:_video_src', () => {
-            this.video.src = this.model.get('_video_src');
-            this.video.play();
+        this.listenTo(this.model, 'change:_data_src', () => {
+            this.result.src = this.model.get('_data_src');
+            if (this.result.play) {
+                this.result.play();
+            }
         });
     },
 });
@@ -1200,8 +1191,8 @@ module.exports = {
     CameraStreamModel: CameraStreamModel,
     MediaImageRecorderModel: MediaImageRecorderModel,
     MediaImageRecorderView: MediaImageRecorderView,
-    MediaRecorderModel: MediaRecorderModel,
-    MediaRecorderView: MediaRecorderView,
+    VideoRecorderModel: VideoRecorderModel,
+    VideoRecorderView: VideoRecorderView,
     WebRTCPeerModel: WebRTCPeerModel,
     WebRTCPeerView: WebRTCPeerView,
     WebRTCRoomModel: WebRTCRoomModel,

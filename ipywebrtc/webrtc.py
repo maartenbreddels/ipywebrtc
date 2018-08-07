@@ -35,7 +35,7 @@ class MediaStream(DOMWidget):
        * :class:`WidgetStream`: Arbitrary DOMWidget as stream.
 
     A MediaStream can be used with:
-       * :class:`MediaRecorder`: To record a movie
+       * :class:`VideoRecorder`: To record a movie
        * :class:`MediaImageRecorder`: To create images/snapshots.
        * :class:`WebRTCRoom` (or rather :class:`WebRTCRoomMqtt`): To stream a media stream to a (set of) peers.
     """
@@ -71,6 +71,7 @@ class WidgetStream(MediaStream):
         return proposal['value']
 
 
+@register
 class ImageStream(MediaStream):
     """Represent a media stream by a static image"""
     _model_name = Unicode('ImageStreamModel').tag(sync=True)
@@ -300,35 +301,20 @@ def _memoryview_to_bytes(value, widget=None):
     return bytes(value)
 
 
-@register
-class MediaRecorder(DOMWidget):
-    """Creates a recorder which allows to record a MediaStream widget, play the
-    record in the Notebook, and download it.
-    """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _model_name = Unicode('MediaRecorderModel').tag(sync=True)
-    _view_name = Unicode('MediaRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-
+class Recorder(DOMWidget):
     stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
                 .tag(sync=True, **widget_serialization)
     data = Bytes(help='The byte object containing the video data after the recording finished.')\
                 .tag(sync=True, from_json=_memoryview_to_bytes)
     filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
-    format = Unicode('webm', help='The format of the recording (e.g. webm/mp4).').tag(sync=True)
     record = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
+    _data_src = Unicode('').tag(sync=True)
 
     @observe('data')
     def _check_autosave(self, change):
         if len(self.data) and self.autosave:
             self.save()
-
-    def play(self):
-        """Play the recording"""
-        self.send({'msg': 'play'})
 
     def download(self):
         """Download the recording (usually a popup appears in the browser)"""
@@ -337,7 +323,7 @@ class MediaRecorder(DOMWidget):
     def save(self, filename=None):
         """Save the data to a file, if no filename is given it is based on the filename trait and the format.
 
-        >>> recorder = MediaRecorder(filename='test', format='mp4')
+        >>> recorder = Recorder(filename='test', format='mp4')
         >>> ...
         >>> recorder.save()  # will save to test.mp4
         >>> recorder.save('foo')  # will save to foo.mp4
@@ -352,7 +338,35 @@ class MediaRecorder(DOMWidget):
         with open(filename, 'wb') as f:
             f.write(self.data)
 
-    _video_src = Unicode('').tag(sync=True)
+
+@register
+class VideoRecorder(Recorder):
+    """Creates a recorder which allows to record a MediaStream widget, play the
+    record in the Notebook, and download it or turn it into a Video widget.
+    """
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('VideoRecorderModel').tag(sync=True)
+    _view_name = Unicode('VideoRecorderView').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    format = Unicode('webm', help='The format of the recording (e.g. webm/mp4).').tag(sync=True)
+
+    @validate('stream')
+    def _valid_stream(self, proposal):
+        stream = proposal['value']
+        if not (isinstance(stream, VideoStream) or
+                isinstance(stream, WidgetStream) or
+                isinstance(stream, CameraStream) or
+                isinstance(stream, ImageStream)):
+            raise TraitError('Cannot record a video from {} instance'.format())
+        return proposal['value']
+
+    def get_record(self):
+        #  Better to create Video "from data" instead of "from url" in case the
+        #  url gets revoked
+        return Video(value=self.data, format=self.format, controls=True)
 
 
 # monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146
@@ -360,66 +374,66 @@ if 'from_json' not in widgets.Image.value.metadata:
     widgets.Image.value.metadata['from_json'] = lambda js, obj: None if js is None else js.tobytes()
 
 
-@register
-class MediaImageRecorder(DOMWidget):
-    """Creates a recorder which allows to grab an Image from a MediaStream widget.
-    """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _model_name = Unicode('MediaImageRecorderModel').tag(sync=True)
-    _view_name = Unicode('MediaImageRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-
-    stream = Instance(MediaStream, allow_none=True,
-         help=MediaRecorder.stream.metadata['help'])\
-        .tag(sync=True, **widget_serialization)
-    image = Instance(Image, help='An instance of ipywidgets.Image that will receive the grabbed image.',
-        allow_none=True).tag(sync=True, **widget_serialization)
-    filename = Unicode('recording', help=MediaRecorder.filename.metadata['help']).tag(sync=True)
-    autosave = Bool(False, help=MediaRecorder.autosave.metadata['help'])
-
-    def __init__(self, **kwargs):
-        super(MediaImageRecorder, self).__init__(**kwargs)
-        self.image.observe(self._check_autosave, 'value')
-
-    @observe('image')
-    def _bind_image(self, change):
-        if change.old:
-            change.old.unobserve(self._check_autosave, 'value')
-        change.new.observe(self._check_autosave, 'value')
-
-    def _check_autosave(self, change):
-        if len(self.image.value) and self.autosave:
-            self.save()
-
-    @traitlets.default('image')
-    def _default_image(self):
-        return Image()
-
-    def grab(self):
-        self.send({'msg': 'grab'})
-
-    def download(self):
-        self.send({'msg': 'download'})
-
-    def save(self, filename=None):
-        """Save the data to a file, if no filename is given it is based on the filename trait and the image.format.
-
-        >>> recorder = MediaImageRecorder(filename='test', format='png')
-        >>> ...
-        >>> recorder.save()  # will save to test.png
-        >>> recorder.save('foo')  # will save to foo.png
-        >>> recorder.save('foo.dat')  # will save to foo.dat
-
-        """
-        filename = filename or self.filename
-        if '.' not in filename:
-            filename += '.' + self.image.format
-        if len(self.image.value) == 0:
-            raise ValueError('No data, did you record anything?')
-        with open(filename, 'wb') as f:
-            f.write(self.image.value)
+# @register
+# class MediaImageRecorder(DOMWidget):
+#     """Creates a recorder which allows to grab an Image from a MediaStream widget.
+#     """
+#     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+#     _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+#     _model_name = Unicode('MediaImageRecorderModel').tag(sync=True)
+#     _view_name = Unicode('MediaImageRecorderView').tag(sync=True)
+#     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+#     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+#
+#     stream = Instance(MediaStream, allow_none=True,
+#          help=MediaRecorder.stream.metadata['help'])\
+#         .tag(sync=True, **widget_serialization)
+#     image = Instance(Image, help='An instance of ipywidgets.Image that will receive the grabbed image.',
+#         allow_none=True).tag(sync=True, **widget_serialization)
+#     filename = Unicode('recording', help=MediaRecorder.filename.metadata['help']).tag(sync=True)
+#     autosave = Bool(False, help=MediaRecorder.autosave.metadata['help'])
+#
+#     def __init__(self, **kwargs):
+#         super(MediaImageRecorder, self).__init__(**kwargs)
+#         self.image.observe(self._check_autosave, 'value')
+#
+#     @observe('image')
+#     def _bind_image(self, change):
+#         if change.old:
+#             change.old.unobserve(self._check_autosave, 'value')
+#         change.new.observe(self._check_autosave, 'value')
+#
+#     def _check_autosave(self, change):
+#         if len(self.image.value) and self.autosave:
+#             self.save()
+#
+#     @traitlets.default('image')
+#     def _default_image(self):
+#         return Image()
+#
+#     def grab(self):
+#         self.send({'msg': 'grab'})
+#
+#     def download(self):
+#         self.send({'msg': 'download'})
+#
+#     def save(self, filename=None):
+#         """Save the data to a file, if no filename is given it is based on the filename trait and the image.format.
+#
+#         >>> recorder = MediaImageRecorder(filename='test', format='png')
+#         >>> ...
+#         >>> recorder.save()  # will save to test.png
+#         >>> recorder.save('foo')  # will save to foo.png
+#         >>> recorder.save('foo.dat')  # will save to foo.dat
+#
+#         """
+#         filename = filename or self.filename
+#         if '.' not in filename:
+#             filename += '.' + self.image.format
+#         if len(self.image.value) == 0:
+#             raise ValueError('No data, did you record anything?')
+#         with open(filename, 'wb') as f:
+#             f.write(self.image.value)
 
 
 @register

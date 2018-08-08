@@ -63,6 +63,7 @@ class WidgetStream(MediaStream):
     max_fps = Int(None, allow_none=True,
                 help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the valeus is None.")\
                 .tag(sync=True)
+    _html2canvas_start_streaming = Bool(False).tag(sync=True)
 
     @validate('max_fps')
     def _valid_fps(self, proposal):

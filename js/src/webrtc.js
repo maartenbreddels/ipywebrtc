@@ -52,6 +52,7 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
 
     remove: function() {
         this.model.captureStream().then((stream) => {
+            this.video.pause();
             this.video.srcObject = null;
         });
         return MediaStreamView.__super__.remove.apply(this, arguments);
@@ -125,7 +126,7 @@ var StreamModel = MediaStreamModel.extend({
                 return this.widget_manager.create_view(this.get(this.type)).then((view) => {
                     this.media_wid = view;
                     this.media = this.media_wid.el;
-                    console.log('Create Video view')
+                    this.media.muted = true;
                 });
             });
         }
@@ -235,6 +236,7 @@ var AudioStreamView = widgets.DOMWidgetView.extend({
 
     remove: function() {
         this.model.captureStream().then((stream) => {
+            this.audio.pause();
             this.audio.srcObject = null;
         });
         return MediaStreamView.__super__.remove.apply(this, arguments);

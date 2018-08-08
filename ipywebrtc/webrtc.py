@@ -110,6 +110,24 @@ class ImageStream(MediaStream):
         """
         return cls(image=Image.from_url(url), **kwargs)
 
+    @classmethod
+    def from_download(cls, url, **kwargs):
+        """Create a `ImageStream` from a url by downloading
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be downloadeded and its bytes
+            assigned to the value trait of the video trait.
+        **kwargs:
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream` with the value set from the content of a url.
+        """
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        image = Image(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
+        return cls(image=image, **kwargs)
+
 
 @register
 class VideoStream(MediaStream):
@@ -154,6 +172,24 @@ class VideoStream(MediaStream):
         video = Video.from_url(url, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
 
+    @classmethod
+    def from_download(cls, url, **kwargs):
+        """Create a `VideoStream` from a url by downloading
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be downloadeded and its bytes
+            assigned to the value trait of the video trait.
+        **kwargs:
+            Extra keyword arguments for `VideoStream`
+        Returns an `VideoStream` with the value set from the content of a url.
+        """
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        video = Video(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
+        return cls(video=video, **kwargs)
+
 
 @register
 class AudioStream(MediaStream):
@@ -196,6 +232,24 @@ class AudioStream(MediaStream):
         Returns an `AudioStream`.
         """
         audio = Audio.from_url(url, autoplay=False, controls=False)
+        return cls(audio=audio, **kwargs)
+
+    @classmethod
+    def from_download(cls, url, **kwargs):
+        """Create a `AudioStream` from a url by downloading
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be downloadeded and its bytes
+            assigned to the value trait of the video trait.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream` with the value set from the content of a url.
+        """
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        audio = Audio(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
 
 

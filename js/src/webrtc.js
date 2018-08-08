@@ -127,11 +127,9 @@ var StreamModel = MediaStreamModel.extend({
                 return this.widget_manager.create_view(this.get(this.type)).then((view) => {
                     this.media_wid = view;
                     this.media = this.media_wid.el;
-                    this.media.muted = true;
                 });
             });
         }
-
         return new Promise((resolve, reject) => {
             this.createView().then(() => {
                 if(this.media.captureStream || this.media.mozCaptureStream) {

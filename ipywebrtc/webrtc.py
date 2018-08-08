@@ -360,6 +360,27 @@ class Recorder(DOMWidget):
 
 
 @register
+class ImageRecorder(Recorder):
+    """Creates a recorder which allows to grab an Image from a MediaStream widget.
+    """
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _model_name = Unicode('ImageRecorderModel').tag(sync=True)
+    _view_name = Unicode('ImageRecorderView').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
+    format = Unicode('png', help='The format of the image.').tag(sync=True)
+    _width = Unicode().tag(sync=True)
+    _height = Unicode().tag(sync=True)
+
+    def get_record(self):
+        #  Better to create Image "from data" instead of "from url" in case the
+        #  url gets revoked
+        return Image(value=self.data, height=self._height, width=self._width, format=self.format)
+
+
+@register
 class VideoRecorder(Recorder):
     """Creates a recorder which allows to record a MediaStream widget, play the
     record in the Notebook, and download it or turn it into a Video widget.
@@ -393,73 +414,6 @@ class AudioRecorder(Recorder):
         #  Better to create Audio "from data" instead of "from url" in case the
         #  url gets revoked
         return Audio(value=self.data, format=self.format, controls=True)
-
-
-# monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146
-if 'from_json' not in widgets.Image.value.metadata:
-    widgets.Image.value.metadata['from_json'] = lambda js, obj: None if js is None else js.tobytes()
-
-
-# @register
-# class MediaImageRecorder(DOMWidget):
-#     """Creates a recorder which allows to grab an Image from a MediaStream widget.
-#     """
-#     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-#     _view_module = Unicode('jupyter-webrtc').tag(sync=True)
-#     _model_name = Unicode('MediaImageRecorderModel').tag(sync=True)
-#     _view_name = Unicode('MediaImageRecorderView').tag(sync=True)
-#     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-#     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
-#
-#     stream = Instance(MediaStream, allow_none=True,
-#          help=MediaRecorder.stream.metadata['help'])\
-#         .tag(sync=True, **widget_serialization)
-#     image = Instance(Image, help='An instance of ipywidgets.Image that will receive the grabbed image.',
-#         allow_none=True).tag(sync=True, **widget_serialization)
-#     filename = Unicode('recording', help=MediaRecorder.filename.metadata['help']).tag(sync=True)
-#     autosave = Bool(False, help=MediaRecorder.autosave.metadata['help'])
-#
-#     def __init__(self, **kwargs):
-#         super(MediaImageRecorder, self).__init__(**kwargs)
-#         self.image.observe(self._check_autosave, 'value')
-#
-#     @observe('image')
-#     def _bind_image(self, change):
-#         if change.old:
-#             change.old.unobserve(self._check_autosave, 'value')
-#         change.new.observe(self._check_autosave, 'value')
-#
-#     def _check_autosave(self, change):
-#         if len(self.image.value) and self.autosave:
-#             self.save()
-#
-#     @traitlets.default('image')
-#     def _default_image(self):
-#         return Image()
-#
-#     def grab(self):
-#         self.send({'msg': 'grab'})
-#
-#     def download(self):
-#         self.send({'msg': 'download'})
-#
-#     def save(self, filename=None):
-#         """Save the data to a file, if no filename is given it is based on the filename trait and the image.format.
-#
-#         >>> recorder = MediaImageRecorder(filename='test', format='png')
-#         >>> ...
-#         >>> recorder.save()  # will save to test.png
-#         >>> recorder.save('foo')  # will save to foo.png
-#         >>> recorder.save('foo.dat')  # will save to foo.dat
-#
-#         """
-#         filename = filename or self.filename
-#         if '.' not in filename:
-#             filename += '.' + self.image.format
-#         if len(self.image.value) == 0:
-#             raise ValueError('No data, did you record anything?')
-#         with open(filename, 'wb') as f:
-#             f.write(self.image.value)
 
 
 @register

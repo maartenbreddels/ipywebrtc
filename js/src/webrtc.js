@@ -421,136 +421,6 @@ var CameraStreamModel = MediaStreamModel.extend({
     }
 });
 
-var MediaImageRecorderModel = widgets.DOMWidgetModel.extend({
-    defaults: function() {
-        return _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-            _model_module: 'jupyter-webrtc',
-            _view_module: 'jupyter-webrtc',
-            _model_name: 'MediaImageRecorderModel',
-            _view_name: 'MediaImageRecorderView',
-            _model_module_version: semver_range,
-            _view_module_version: semver_range,
-            stream: null,
-            image: null,
-            filename: 'stream-image'
-         })
-    },
-    initialize: function() {
-        MediaImageRecorderModel.__super__.initialize.apply(this, arguments);
-        window.last_media_image_recorder = this;
-
-        this.on('msg:custom', _.bind(this.handleCustomMessage, this));
-        this.last_blob = null;
-    },
-    handleCustomMessage: function(content) {
-        if (content.msg == 'grab') {
-            this.grab();
-        }
-        else if (content.msg == 'download') {
-            this.download();
-        }
-    },
-    grab: async function() {
-        let image = this.get('image');
-        if(!image)
-            return;
-        let format = image.get('format') || 'png';
-        let mime_type = `image/${format}`
-
-        // turn the mediastream into a video element
-        let mediaStream = await captureStream(this.get('stream'));
-        let video = document.createElement('video');
-        video.srcObject = mediaStream;
-        await utils.onCanPlay(video);
-        video.play() // required on chrome, otherwise we get a black screen
-
-        // and the video element can be drawn onto a canvas
-        let canvas = document.createElement('canvas')
-        let context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // from the canvas we can get the underlying encoded data
-        // TODO: check support for toBlob, or find a polyfill
-        canvas.toBlob((blob) => {
-            this.last_blob = blob;
-            var reader = new FileReader()
-            reader.readAsArrayBuffer(blob)
-            reader.onloadend = () => {
-                var bytes = new Uint8Array(reader.result)
-                console.log('assembled ', reader.result, reader.result.byteLength)
-                let dataView = new DataView(bytes.buffer);
-                image.set({value: dataView, width: canvas.width, height: canvas.height, format: format});
-                image.save_changes()
-                this.trigger('blob_changed');
-            }
-        }, mime_type);
-    },
-    download: function() {
-        // var blob = new Blob(this.chunks, {type: 'video/' + this.get('format')});
-        let filename = this.get('filename');
-        let format = this.get('image').get('format') || 'png';
-        if (filename.indexOf('.') < 0) {
-          filename = this.get('filename') + '.' + format;
-        }
-        utils.downloadBlob(this.last_blob, filename);
-    },
-}, {
-serializers: _.extend({
-    stream: { deserialize: widgets.unpack_models },
-    image: { deserialize: widgets.unpack_models },
-     // we need to specify the identity function, otherwise JSON.parse(JSON.stringify(x)) will be used
-    data: { serialize: (x) => x }
-    }, widgets.DOMWidgetModel.serializers)
-});
-
-
-var MediaImageRecorderView = widgets.DOMWidgetView.extend({
-    render: function() {
-        MediaImageRecorderView.__super__.render.apply(this, arguments);
-
-        this.el.classList.add('jupyter-widgets');
-
-        this.buttons = document.createElement('div');
-        this.buttons.classList.add('widget-inline-hbox');
-        this.buttons.classList.add('widget-play');
-
-        this.grabButton = document.createElement('grab');
-        this.downloadButton = document.createElement('button');
-        this.img = document.createElement('img');
-
-        this.grabButton.className = 'jupyter-button';
-        this.downloadButton.className = 'jupyter-button';
-
-        this.buttons.appendChild(this.grabButton);
-        this.buttons.appendChild(this.downloadButton);
-        this.el.appendChild(this.buttons);
-        this.el.appendChild(this.img);
-
-        var cameraIcon = document.createElement('i');
-        cameraIcon.className = 'fa fa-camera';
-        this.grabButton.appendChild(cameraIcon);
-        var downloadIcon = document.createElement('i');
-        downloadIcon.className = 'fa fa-download';
-        this.downloadButton.appendChild(downloadIcon);
-
-        this.grabButton.onclick = this.model.grab.bind(this.model);
-        this.downloadButton.onclick = this.model.download.bind(this.model);
-
-
-        this.downloadButton.disabled = !Boolean(this.model.last_blob)
-        if(this.model.last_blob)
-            this.img.src = URL.createObjectURL(this.model.last_blob);
-        this.listenTo(this.model, 'blob_changed', () => {
-            this.downloadButton.disabled = !Boolean(this.model.last_blob)
-            if(this.img.src)
-                URL.revokeObjectURL(this.img.src);
-            this.img.src = URL.createObjectURL(this.model.last_blob);
-        });
-    },
-});
-
 
 var RecorderModel = widgets.DOMWidgetModel.extend({
     defaults: function() {
@@ -707,6 +577,96 @@ var RecorderView = widgets.DOMWidgetView.extend({
                 this.result.play();
             }
         });
+    },
+});
+
+var ImageRecorderModel = RecorderModel.extend({
+    defaults: function() {
+        return _.extend(RecorderModel.prototype.defaults(), {
+            _model_name: 'ImageRecorderModel',
+            _view_name: 'ImageRecorderView',
+            _height: '',
+            _width: '',
+         })
+    },
+
+    initialize: function() {
+        ImageRecorderModel.__super__.initialize.apply(this, arguments);
+        window.last_image_recorder = this;
+
+        this.type = 'image';
+    },
+
+    updateRecord: function() {
+        var source = this.get('stream');
+        if(!source) {
+            new Error('No stream specified');
+            return;
+        }
+
+        var mimeType = this.type + '/' + this.get('format');
+        if(this.get('recording')) {
+            if (this.get('_data_src') != '') {
+                URL.revokeObjectURL(this.get('_data_src'));
+            }
+
+            // turn the mediastream into a video element
+            captureStream(this.get('stream')).then((mediaStream) => {
+                let video = document.createElement('video');
+                video.srcObject = mediaStream;
+                utils.onCanPlay(video).then(() => {
+                    video.play() // required on chrome, otherwise we get a black screen
+
+                    // and the video element can be drawn onto a canvas
+                    let canvas = document.createElement('canvas')
+                    let context = canvas.getContext('2d');
+                    let height = video.videoHeight;
+                    let width = video.videoWidth;
+                    canvas.height = height;
+                    canvas.width = width;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // from the canvas we can get the underlying encoded data
+                    // TODO: check support for toBlob, or find a polyfill
+                    canvas.toBlob((blob) => {
+                        this.set('_data_src', window.URL.createObjectURL(blob));
+                        this._last_blob = blob;
+
+                        var reader = new FileReader()
+                        reader.readAsArrayBuffer(blob)
+                        reader.onloadend = () => {
+                            var bytes = new Uint8Array(reader.result)
+                            this.set('data', new DataView(bytes.buffer));
+                            this.set('_height', height.toString() + 'px');
+                            this.set('_width', width.toString() + 'px');
+                            this.save_changes();
+                        }
+                    }, mimeType);
+
+                    this.set('recording', false);
+                    this.save_changes();
+                });
+            });
+        }
+    },
+
+    download: function() {
+        let filename = this.get('filename');
+        let format = this.get('format');
+        if (filename.indexOf('.') < 0) {
+          filename = this.get('filename') + '.' + format;
+        }
+        utils.downloadBlob(this._last_blob, filename);
+    },
+}, {
+    serializers: RecorderModel.serializers
+});
+
+var ImageRecorderView = RecorderView.extend({
+    initialize: function() {
+        ImageRecorderView.__super__.initialize.apply(this, arguments);
+        this.tag = 'img';
+        this.recordIconClass = 'fa fa-camera';
     },
 });
 
@@ -1217,8 +1177,8 @@ module.exports = {
     AudioStreamModel: AudioStreamModel,
     AudioStreamView: AudioStreamView,
     CameraStreamModel: CameraStreamModel,
-    MediaImageRecorderModel: MediaImageRecorderModel,
-    MediaImageRecorderView: MediaImageRecorderView,
+    ImageRecorderModel: ImageRecorderModel,
+    ImageRecorderView: ImageRecorderView,
     VideoRecorderModel: VideoRecorderModel,
     VideoRecorderView: VideoRecorderView,
     AudioRecorderModel: AudioRecorderModel,

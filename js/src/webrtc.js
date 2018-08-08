@@ -108,7 +108,7 @@ var ImageStreamModel = MediaStreamModel.extend({
 var StreamModel = MediaStreamModel.extend({
     defaults: function() {
         return _.extend(MediaStreamModel.prototype.defaults(), {
-            play: true,
+            playing: true,
         });
     },
 
@@ -117,7 +117,7 @@ var StreamModel = MediaStreamModel.extend({
 
         this.media = undefined;
 
-        this.on('change:play', this.updatePlay, this)
+        this.on('change:playing', this.updatePlay, this);
     },
 
     captureStream: function() {
@@ -157,7 +157,7 @@ var StreamModel = MediaStreamModel.extend({
     },
 
     updatePlay: function() {
-        if(this.get('play')) {
+        if(this.get('playing')) {
             this.media.play();
         } else {
             this.media.pause();

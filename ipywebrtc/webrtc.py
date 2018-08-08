@@ -121,7 +121,7 @@ class VideoStream(MediaStream):
         allow_none=False,
         help="An ipywidgets.Video instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
-    play = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
+    playing = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -165,7 +165,7 @@ class AudioStream(MediaStream):
         Audio,
         help="An ipywidgets.Audio instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
-    play = Bool(True, help='Plays the audiostream or pauses it.').tag(sync=True)
+    playing = Bool(True, help='Plays the audiostream or pauses it.').tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):

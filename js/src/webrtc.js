@@ -135,21 +135,19 @@ var StreamModel = MediaStreamModel.extend({
             this.createView().then(() => {
                 if(this.media.captureStream || this.media.mozCaptureStream) {
                     // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                    if (!this.makeStream) {
-                        this.makeStream = _.once(() => {
-                            this.updatePlay();
+                    var makeStream = () => {
+                        this.updatePlay();
 
-                            if(this.media.captureStream) {
-                                resolve(this.media.captureStream());
-                            } else if(this.media.mozCaptureStream) {
-                                resolve(this.media.mozCaptureStream());
-                            }
-                        });
-                    }
+                        if(this.media.captureStream) {
+                            resolve(this.media.captureStream());
+                        } else if(this.media.mozCaptureStream) {
+                            resolve(this.media.mozCaptureStream());
+                        }
+                    };
                     // see https://github.com/webrtc/samples/pull/853
-                    this.media.oncanplay = this.makeStream;
+                    this.media.oncanplay = makeStream;
                     if(this.media.readyState >= 3) {
-                        this.makeStream();
+                        makeStream();
                     }
                 } else {
                     reject(new Error('captureStream not supported for this browser'));
@@ -191,12 +189,12 @@ var VideoStreamModel = StreamModel.extend({
 }, {
     serializers: _.extend({
         video: { deserialize: widgets.unpack_models },
-    }, MediaStreamModel.serializers)
+    }, StreamModel.serializers)
 });
 
-var AudioStreamModel = MediaStreamModel.extend({
+var AudioStreamModel = StreamModel.extend({
     defaults: function() {
-        return _.extend(MediaStreamModel.prototype.defaults(), {
+        return _.extend(StreamModel.prototype.defaults(), {
             _model_name: 'AudioStreamModel',
             _view_name: 'AudioStreamView',
             audio: undefined,
@@ -212,7 +210,7 @@ var AudioStreamModel = MediaStreamModel.extend({
 }, {
     serializers: _.extend({
         audio: { deserialize: widgets.unpack_models },
-    }, MediaStreamModel.serializers)
+    }, StreamModel.serializers)
 });
 
 var AudioStreamView = widgets.DOMWidgetView.extend({

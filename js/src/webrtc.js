@@ -586,6 +586,12 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
             return;
         }
 
+        var mimeType = this.type + '/' + this.get('format');
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            new Error('The mimeType', mimeType, 'is not supported for record on this browser');
+            return;
+        }
+
         if(this.get('record')) {
             this.chunks = [];
 
@@ -593,7 +599,7 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
                 this.mediaRecorder = new MediaRecorder(stream, {
                     audioBitsPerSecond: 128000,
                     videoBitsPerSecond: 2500000,
-                    mimeType: this.type + '/' + this.get('format')
+                    mimeType: mimeType
                 });
                 this.mediaRecorder.start();
                 this.mediaRecorder.ondataavailable = (event) => {
@@ -605,7 +611,7 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
                 if (this.get('_data_src') != '') {
                     URL.revokeObjectURL(this.get('_data_src'));
                 }
-                var blob = new Blob(this.chunks, { 'type' : this.type + '/' + this.get('format') });
+                var blob = new Blob(this.chunks, { 'type' : mimeType });
                 this.set('_data_src', window.URL.createObjectURL(blob));
 
                 var reader = new FileReader();

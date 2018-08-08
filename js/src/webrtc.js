@@ -36,6 +36,7 @@ var MediaStreamView = widgets.DOMWidgetView.extend({
         MediaStreamView.__super__.render.apply(this, arguments);
         window.last_media_stream_view = this;
         this.video = document.createElement('video');
+        this.video.controls = true;
         this.pWidget.addClass('jupyter-widgets');
         this.pWidget.addClass('widget-image');
 

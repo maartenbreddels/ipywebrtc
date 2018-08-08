@@ -272,7 +272,7 @@ class Recorder(DOMWidget):
                 .tag(sync=True, from_json=_memoryview_to_bytes)
     filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
     format = Unicode('webm', help='The format of the recording.').tag(sync=True)
-    record = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
+    recording = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
     _data_src = Unicode('').tag(sync=True)
 

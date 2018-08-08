@@ -558,7 +558,7 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
             data: null,
             filename: 'record',
             format: 'webm',
-            record: false,
+            recording: false,
             _data_src: '',
          })
     },
@@ -567,7 +567,7 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
         RecorderModel.__super__.initialize.apply(this, arguments);
 
         this.on('msg:custom', _.bind(this.handleCustomMessage, this));
-        this.on('change:record', this.updateRecord);
+        this.on('change:recording', this.updateRecord);
 
         this.mediaRecorder = null;
         this.chunks = [];
@@ -592,7 +592,7 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
             return;
         }
 
-        if(this.get('record')) {
+        if(this.get('recording')) {
             this.chunks = [];
 
             captureStream(source).then((stream) => {
@@ -684,12 +684,12 @@ var RecorderView = widgets.DOMWidgetView.extend({
         this.downloadButton.appendChild(downloadIcon);
 
         this.recordButton.onclick = () => {
-            this.model.set('record', !this.model.get('record'));
+            this.model.set('recording', !this.model.get('recording'));
         };
         this.downloadButton.onclick = this.model.download.bind(this.model);
 
-        this.listenTo(this.model, 'change:record', () => {
-            if(this.model.get('record')) {
+        this.listenTo(this.model, 'change:recording', () => {
+            if(this.model.get('recording')) {
                 recordIcon.style.color = 'darkred';
             } else {
                 recordIcon.style.color = '';

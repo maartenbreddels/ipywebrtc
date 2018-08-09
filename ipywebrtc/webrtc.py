@@ -126,7 +126,7 @@ class ImageStream(MediaStream):
         ext = os.path.splitext(url)[1]
         if ext:
             format = ext[1:]
-        image = Image(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
+        image = Image(value=urlopen(url).read(), format=format)
         return cls(image=image, **kwargs)
 
 

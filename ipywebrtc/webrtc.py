@@ -316,16 +316,12 @@ class CameraStream(MediaStream):
         return CameraStream(constraints=constraints, **kwargs)
 
 
-def _memoryview_to_bytes(value, widget=None):
-    return bytes(value)
-
-
 class Recorder(DOMWidget):
     stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
                 .tag(sync=True, **widget_serialization)
     data = Bytes(help='The byte object containing the video data after the recording finished.')\
-                .tag(sync=True, from_json=_memoryview_to_bytes)
-    filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
+                .tag(sync=True, **widgets.trait_types.bytes_serialization)
+    filename = Unicode('record', help='The filename used for downloading or auto saving.').tag(sync=True)
     format = Unicode('webm', help='The format of the recording.').tag(sync=True)
     recording = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)

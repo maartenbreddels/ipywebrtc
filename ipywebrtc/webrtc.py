@@ -36,7 +36,8 @@ class MediaStream(DOMWidget):
 
     A MediaStream can be used with:
        * :class:`VideoRecorder`: To record a movie
-       * :class:`MediaImageRecorder`: To create images/snapshots.
+       * :class:`ImageRecorder`: To create images/snapshots.
+       * :class:`AudioRecorder`: To record audio.
        * :class:`WebRTCRoom` (or rather :class:`WebRTCRoomMqtt`): To stream a media stream to a (set of) peers.
     """
 

@@ -178,7 +178,7 @@ var VideoStreamModel = StreamModel.extend({
     defaults: function() {
         return _.extend(StreamModel.prototype.defaults(), {
             _model_name: 'VideoStreamModel',
-            video: undefined,
+            video: null,
         });
     },
 
@@ -586,7 +586,7 @@ var ImageRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'ImageRecorderModel',
             _view_name: 'ImageRecorderView',
-            image: undefined,
+            image: null,
             _height: '',
             _width: '',
          })
@@ -680,7 +680,7 @@ var VideoRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'VideoRecorderModel',
             _view_name: 'VideoRecorderView',
-            video: undefined,
+            video: null,
          })
     },
 
@@ -709,7 +709,7 @@ var AudioRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'AudioRecorderModel',
             _view_name: 'AudioRecorderView',
-            audio: undefined,
+            audio: null,
          })
     },
 

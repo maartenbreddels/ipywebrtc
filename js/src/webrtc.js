@@ -599,37 +599,28 @@ var ImageRecorderModel = RecorderModel.extend({
         this.type = 'image';
     },
 
-    updateRecord: function() {
-        var source = this.get('stream');
-        if(!source) {
-            new Error('No stream specified');
-            return;
-        }
-
+    snapshot: function() {
         var mimeType = this.type + '/' + this.get('format');
-        if(this.get('recording')) {
-            if (this.get('_data_src') != '') {
-                URL.revokeObjectURL(this.get('_data_src'));
-            }
-
+        return captureStream(this.get('stream')).then((mediaStream) => {
             // turn the mediastream into a video element
-            captureStream(this.get('stream')).then((mediaStream) => {
-                let video = document.createElement('video');
-                video.srcObject = mediaStream;
-                utils.onCanPlay(video).then(() => {
-                    video.play() // required on chrome, otherwise we get a black screen
+            let video = document.createElement('video');
+            video.srcObject = mediaStream;
+            return utils.onCanPlay(video).then(() => {
+                console.log('onCanPlay')
+                video.play() // required on chrome, otherwise we get a black screen
 
-                    // and the video element can be drawn onto a canvas
-                    let canvas = document.createElement('canvas')
-                    let context = canvas.getContext('2d');
-                    let height = video.videoHeight;
-                    let width = video.videoWidth;
-                    canvas.height = height;
-                    canvas.width = width;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // and the video element can be drawn onto a canvas
+                let canvas = document.createElement('canvas')
+                let context = canvas.getContext('2d');
+                let height = video.videoHeight;
+                let width = video.videoWidth;
+                canvas.height = height;
+                canvas.width = width;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                    // from the canvas we can get the underlying encoded data
-                    // TODO: check support for toBlob, or find a polyfill
+                // from the canvas we can get the underlying encoded data
+                // TODO: check support for toBlob, or find a polyfill
+                return new Promise((resolve, reject) => {
                     canvas.toBlob((blob) => {
                         this.set('_data_src', window.URL.createObjectURL(blob));
                         this._last_blob = blob;
@@ -643,14 +634,28 @@ var ImageRecorderModel = RecorderModel.extend({
                             this.set('_height', height.toString() + 'px');
                             this.set('_width', width.toString() + 'px');
                             this.save_changes();
+                            resolve()
                         }
                     }, mimeType);
-
-                    this.set('recording', false);
-                    this.save_changes();
                 });
+
+                this.set('recording', false);
+                this.save_changes();
             });
+        });
+    },
+
+    updateRecord: function() {
+        var source = this.get('stream');
+        if(!source) {
+            new Error('No stream specified');
+            return;
         }
+
+        if (this.get('_data_src') != '') {
+            URL.revokeObjectURL(this.get('_data_src'));
+        }
+        this.snapshot()
     },
 
     download: function() {

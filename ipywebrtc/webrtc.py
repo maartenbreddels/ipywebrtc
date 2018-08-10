@@ -317,6 +317,11 @@ class CameraStream(MediaStream):
 
 
 class Recorder(DOMWidget):
+    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
+    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+
     stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
                 .tag(sync=True, **widget_serialization)
     data = Bytes(help='The byte object containing the video data after the recording finished.')\
@@ -359,12 +364,8 @@ class Recorder(DOMWidget):
 class ImageRecorder(Recorder):
     """Creates a recorder which allows to grab an Image from a MediaStream widget.
     """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('ImageRecorderModel').tag(sync=True)
     _view_name = Unicode('ImageRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     format = Unicode('png', help='The format of the image.').tag(sync=True)
     _width = Unicode().tag(sync=True)
@@ -381,12 +382,8 @@ class VideoRecorder(Recorder):
     """Creates a recorder which allows to record a MediaStream widget, play the
     record in the Notebook, and download it or turn it into a Video widget.
     """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('VideoRecorderModel').tag(sync=True)
     _view_name = Unicode('VideoRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     def get_record(self):
         #  Better to create Video "from data" instead of "from url" in case the
@@ -399,12 +396,8 @@ class AudioRecorder(Recorder):
     """Creates a recorder which allows to record the Audio of a MediaStream widget, play the
     record in the Notebook, and download it or turn it into an Audio widget.
     """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
     _model_name = Unicode('AudioRecorderModel').tag(sync=True)
     _view_name = Unicode('AudioRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     def get_record(self):
         #  Better to create Audio "from data" instead of "from url" in case the

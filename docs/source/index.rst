@@ -60,6 +60,41 @@ Conda users::
    api
 
 
+Demos
+=====
+
+WebRTC and `ipyvolume`_
+-----------------------
+
+Use remote MediaStreams and show them in 3d using `ipyvolume`_.
+
+.. figure:: https://user-images.githubusercontent.com/1765949/43977008-03dbfac0-9ce3-11e8-9bb9-4a5f8f2cc79a.gif
+   :alt: webrtc
+
+   webrtc
+
+ImageRecorder
+-------------
+
+Record and image from *any* stream for postprocessing.
+
+.. figure:: https://user-images.githubusercontent.com/1765949/43978560-fe0bf500-9ce7-11e8-81b9-9d30d26d7492.gif
+   :alt: recorder
+
+   recorder
+
+WidgetStream
+------------
+
+Turn *any* widget into a MediaStream.
+
+.. figure:: https://user-images.githubusercontent.com/1765949/43977992-1668d534-9ce6-11e8-8fab-783105476e98.gif
+   :alt: widget-stream
+
+   widget-stream
+
+.. _ipyvolume: https://github.com/maartenbreddels/ipyvolume/
+
 
 Indices and tables
 ==================

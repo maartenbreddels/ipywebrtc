@@ -7,6 +7,9 @@
 
 WebRTC and MediaStream API exposed in the Jupyter notebook/lab.
 
+[See this tweet](https://twitter.com/maartenbreddels/status/1027995865024262144>) for a demo screencast.
+
+
 # Why use ipywebrtc?
 
 Using ipywebrtc you can create a [MediaStream](api.html#ipywebrtc.webrtc.MediaStream) out of:

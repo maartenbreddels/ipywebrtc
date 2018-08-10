@@ -147,7 +147,7 @@ var StreamModel = MediaStreamModel.extend({
                         }
                     };
                     // see https://github.com/webrtc/samples/pull/853
-                    this.media.oncanplay = makeStream;
+                    this.media.addEventListener('canplay', makeStream);
                     if(this.media.readyState >= 3) {
                         makeStream();
                     }

@@ -322,9 +322,9 @@ class Recorder(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
+    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source for recording.")\
                 .tag(sync=True, **widget_serialization)
-    data = Bytes(help='The byte object containing the video data after the recording finished.')\
+    data = Bytes(help='The byte object containing the media data after the recording finished.')\
                 .tag(sync=True, **widgets.trait_types.bytes_serialization)
     filename = Unicode('record', help='The filename used for downloading or auto saving.').tag(sync=True)
     format = Unicode('webm', help='The format of the recording.').tag(sync=True)
@@ -367,14 +367,30 @@ class ImageRecorder(Recorder):
     _model_name = Unicode('ImageRecorderModel').tag(sync=True)
     _view_name = Unicode('ImageRecorderView').tag(sync=True)
 
+    image = Instance(Image)
     format = Unicode('png', help='The format of the image.').tag(sync=True)
     _width = Unicode().tag(sync=True)
     _height = Unicode().tag(sync=True)
 
-    def get_record(self):
-        #  Better to create Image "from data" instead of "from url" in case the
-        #  url gets revoked
-        return Image(value=self.data, height=self._height, width=self._width, format=self.format)
+    @traitlets.default('image')
+    def _default_image(self):
+        return Image(value=self.data, width=self._width, height=self._height, format=self.format)
+
+    @observe('data')
+    def _update_image_data(self, change):
+        self.image.value = self.data
+
+    @observe('_width')
+    def _update_image_width(self, change):
+        self.image.width = self._width
+
+    @observe('_height')
+    def _update_image_height(self, change):
+        self.image.height = self._height
+
+    @observe('format')
+    def _update_image_format(self, change):
+        self.image.format = self.format
 
 
 @register
@@ -385,10 +401,19 @@ class VideoRecorder(Recorder):
     _model_name = Unicode('VideoRecorderModel').tag(sync=True)
     _view_name = Unicode('VideoRecorderView').tag(sync=True)
 
-    def get_record(self):
-        #  Better to create Video "from data" instead of "from url" in case the
-        #  url gets revoked
+    video = Instance(Video)
+
+    @traitlets.default('video')
+    def _default_video(self):
         return Video(value=self.data, format=self.format, controls=True)
+
+    @observe('data')
+    def _update_video_data(self, change):
+        self.video.value = self.data
+
+    @observe('format')
+    def _update_video_format(self, change):
+        self.video.format = self.format
 
 
 @register
@@ -399,10 +424,19 @@ class AudioRecorder(Recorder):
     _model_name = Unicode('AudioRecorderModel').tag(sync=True)
     _view_name = Unicode('AudioRecorderView').tag(sync=True)
 
-    def get_record(self):
-        #  Better to create Audio "from data" instead of "from url" in case the
-        #  url gets revoked
+    audio = Instance(Audio)
+
+    @traitlets.default('audio')
+    def _default_audio(self):
         return Audio(value=self.data, format=self.format, controls=True)
+
+    @observe('data')
+    def _update_audio_data(self, change):
+        self.audio.value = self.data
+
+    @observe('format')
+    def _update_audio_format(self, change):
+        self.audio.format = self.format
 
 
 @register

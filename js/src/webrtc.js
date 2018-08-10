@@ -131,6 +131,9 @@ var StreamModel = MediaStreamModel.extend({
             });
         }
         return new Promise((resolve, reject) => {
+            let widget = this.get(this.type);
+            if(!widget)
+                return reject(new Error('no media widget passed'))
             this.createView().then(() => {
                 if(this.media.captureStream || this.media.mozCaptureStream) {
                     // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js

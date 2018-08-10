@@ -324,40 +324,15 @@ class Recorder(DOMWidget):
 
     stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source for recording.")\
                 .tag(sync=True, **widget_serialization)
-    data = Bytes(help='The byte object containing the media data after the recording finished.')\
-                .tag(sync=True, **widgets.trait_types.bytes_serialization)
     filename = Unicode('record', help='The filename used for downloading or auto saving.').tag(sync=True)
     format = Unicode('webm', help='The format of the recording.').tag(sync=True)
     recording = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
     _data_src = Unicode('').tag(sync=True)
 
-    @observe('data')
-    def _check_autosave(self, change):
-        if len(self.data) and self.autosave:
-            self.save()
-
     def download(self):
         """Download the recording (usually a popup appears in the browser)"""
         self.send({'msg': 'download'})
-
-    def save(self, filename=None):
-        """Save the data to a file, if no filename is given it is based on the filename trait and the format.
-
-        >>> recorder = Recorder(filename='test', format='mp4')
-        >>> ...
-        >>> recorder.save()  # will save to test.mp4
-        >>> recorder.save('foo')  # will save to foo.mp4
-        >>> recorder.save('foo.dat')  # will save to foo.dat
-
-        """
-        filename = filename or self.filename
-        if '.' not in filename:
-            filename += '.' + self.format
-        if len(self.data) == 0:
-            raise ValueError('No data, did you record anything?')
-        with open(filename, 'wb') as f:
-            f.write(self.data)
 
 
 @register
@@ -367,18 +342,14 @@ class ImageRecorder(Recorder):
     _model_name = Unicode('ImageRecorderModel').tag(sync=True)
     _view_name = Unicode('ImageRecorderView').tag(sync=True)
 
-    image = Instance(Image)
+    image = Instance(Image).tag(sync=True, **widget_serialization)
     format = Unicode('png', help='The format of the image.').tag(sync=True)
     _width = Unicode().tag(sync=True)
     _height = Unicode().tag(sync=True)
 
     @traitlets.default('image')
     def _default_image(self):
-        return Image(value=self.data, width=self._width, height=self._height, format=self.format)
-
-    @observe('data')
-    def _update_image_data(self, change):
-        self.image.value = self.data
+        return Image(width=self._width, height=self._height, format=self.format)
 
     @observe('_width')
     def _update_image_width(self, change):
@@ -392,6 +363,34 @@ class ImageRecorder(Recorder):
     def _update_image_format(self, change):
         self.image.format = self.format
 
+    @observe('image')
+    def _bind_image(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
+    def _check_autosave(self, change):
+        if len(self.image.value) and self.autosave:
+            self.save()
+
+    def save(self, filename=None):
+        """Save the image to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = ImageRecorder(filename='test', format='png')
+        >>> ...
+        >>> recorder.save()  # will save to test.png
+        >>> recorder.save('foo')  # will save to foo.png
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.image.value) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.image.value)
+
 
 @register
 class VideoRecorder(Recorder):
@@ -401,19 +400,43 @@ class VideoRecorder(Recorder):
     _model_name = Unicode('VideoRecorderModel').tag(sync=True)
     _view_name = Unicode('VideoRecorderView').tag(sync=True)
 
-    video = Instance(Video)
+    video = Instance(Video).tag(sync=True, **widget_serialization)
 
     @traitlets.default('video')
     def _default_video(self):
-        return Video(value=self.data, format=self.format, controls=True)
-
-    @observe('data')
-    def _update_video_data(self, change):
-        self.video.value = self.data
+        return Video(format=self.format, controls=True)
 
     @observe('format')
     def _update_video_format(self, change):
         self.video.format = self.format
+
+    @observe('video')
+    def _bind_video(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
+    def _check_autosave(self, change):
+        if len(self.video.value) and self.autosave:
+            self.save()
+
+    def save(self, filename=None):
+        """Save the video to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = VideoRecorder(filename='test', format='mp4')
+        >>> ...
+        >>> recorder.save()  # will save to test.mp4
+        >>> recorder.save('foo')  # will save to foo.mp4
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.video.value) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.video.value)
 
 
 @register
@@ -424,19 +447,43 @@ class AudioRecorder(Recorder):
     _model_name = Unicode('AudioRecorderModel').tag(sync=True)
     _view_name = Unicode('AudioRecorderView').tag(sync=True)
 
-    audio = Instance(Audio)
+    audio = Instance(Audio).tag(sync=True, **widget_serialization)
 
     @traitlets.default('audio')
     def _default_audio(self):
-        return Audio(value=self.data, format=self.format, controls=True)
-
-    @observe('data')
-    def _update_audio_data(self, change):
-        self.audio.value = self.data
+        return Audio(format=self.format, controls=True)
 
     @observe('format')
     def _update_audio_format(self, change):
         self.audio.format = self.format
+
+    @observe('audio')
+    def _bind_video(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
+    def _check_autosave(self, change):
+        if len(self.audio.value) and self.autosave:
+            self.save()
+
+    def save(self, filename=None):
+        """Save the audio to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = AudioRecorder(filename='test', format='mp3')
+        >>> ...
+        >>> recorder.save()  # will save to test.mp3
+        >>> recorder.save('foo')  # will save to foo.mp3
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.audio.value) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.audio.value)
 
 
 @register

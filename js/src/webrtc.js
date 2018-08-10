@@ -430,7 +430,6 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
             _model_module_version: semver_range,
             _view_module_version: semver_range,
             stream: null,
-            data: null,
             filename: 'record',
             format: 'webm',
             recording: false,
@@ -488,13 +487,14 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
                 }
                 var blob = new Blob(this.chunks, { 'type' : mimeType });
                 this.set('_data_src', window.URL.createObjectURL(blob));
+                this.save_changes();
 
                 var reader = new FileReader();
                 reader.readAsArrayBuffer(blob);
                 reader.onloadend = () => {
                     var bytes = new Uint8Array(reader.result);
-                    this.set('data', new DataView(bytes.buffer));
-                    this.save_changes();
+                    this.get(this.type).set('value', new DataView(bytes.buffer));
+                    this.get(this.type).save_changes();
                 }
             }
             this.mediaRecorder.stop();
@@ -521,10 +521,8 @@ var RecorderModel = widgets.DOMWidgetModel.extend({
         return RecorderModel.__super__.close.apply(this, arguments);
     }
 }, {
-serializers: _.extend({
-    stream: { deserialize: widgets.unpack_models },
-     // we need to specify the identity function, otherwise JSON.parse(JSON.stringify(x)) will be used
-    data: { serialize: (x) => x }
+    serializers: _.extend({
+        stream: { deserialize: widgets.unpack_models },
     }, widgets.DOMWidgetModel.serializers)
 });
 
@@ -585,6 +583,7 @@ var ImageRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'ImageRecorderModel',
             _view_name: 'ImageRecorderView',
+            image: undefined,
             _height: '',
             _width: '',
          })
@@ -636,7 +635,8 @@ var ImageRecorderModel = RecorderModel.extend({
                         reader.readAsArrayBuffer(blob)
                         reader.onloadend = () => {
                             var bytes = new Uint8Array(reader.result)
-                            this.set('data', new DataView(bytes.buffer));
+                            this.get(this.type).set('value', new DataView(bytes.buffer));
+                            this.get(this.type).save_changes();
                             this.set('_height', height.toString() + 'px');
                             this.set('_width', width.toString() + 'px');
                             this.save_changes();
@@ -659,7 +659,9 @@ var ImageRecorderModel = RecorderModel.extend({
         utils.downloadBlob(this._last_blob, filename);
     },
 }, {
-    serializers: RecorderModel.serializers
+    serializers: _.extend({
+        image: { deserialize: widgets.unpack_models },
+    }, RecorderModel.serializers)
 });
 
 var ImageRecorderView = RecorderView.extend({
@@ -675,6 +677,7 @@ var VideoRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'VideoRecorderModel',
             _view_name: 'VideoRecorderView',
+            video: undefined,
          })
     },
 
@@ -684,6 +687,10 @@ var VideoRecorderModel = RecorderModel.extend({
 
         this.type = 'video';
     },
+}, {
+    serializers: _.extend({
+        video: { deserialize: widgets.unpack_models },
+    }, RecorderModel.serializers)
 });
 
 var VideoRecorderView = RecorderView.extend({
@@ -699,6 +706,7 @@ var AudioRecorderModel = RecorderModel.extend({
         return _.extend(RecorderModel.prototype.defaults(), {
             _model_name: 'AudioRecorderModel',
             _view_name: 'AudioRecorderView',
+            audio: undefined,
          })
     },
 
@@ -708,6 +716,10 @@ var AudioRecorderModel = RecorderModel.extend({
 
         this.type = 'audio';
     },
+}, {
+    serializers: _.extend({
+        audio: { deserialize: widgets.unpack_models },
+    }, RecorderModel.serializers)
 });
 
 var AudioRecorderView = RecorderView.extend({

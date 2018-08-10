@@ -2,3 +2,4 @@ recursive-include ipywebrtc/static *.*
 include LICENSE
 include README.rst
 include README.md
+include ipywebrtc.json

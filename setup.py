@@ -137,6 +137,7 @@ setup_args = {
             'ipywebrtc/static/index.js',
             'ipywebrtc/static/index.js.map',
         ]),
+        ('etc/jupyter/nbconfig/notebook.d' , ['ipywebrtc.json'])
     ],
     'install_requires': [
         'ipywidgets>=7.4.0',

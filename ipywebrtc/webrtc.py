@@ -9,7 +9,7 @@ from traitlets import (
     observe,
     Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate
 )
-from ipywidgets import DOMWidget, Image, register, widget_serialization
+from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
 from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
@@ -35,8 +35,9 @@ class MediaStream(DOMWidget):
        * :class:`WidgetStream`: Arbitrary DOMWidget as stream.
 
     A MediaStream can be used with:
-       * :class:`MediaRecorder`: To record a movie
-       * :class:`MediaImageRecorder`: To create images/snapshots.
+       * :class:`VideoRecorder`: To record a movie
+       * :class:`ImageRecorder`: To create images/snapshots.
+       * :class:`AudioRecorder`: To record audio.
        * :class:`WebRTCRoom` (or rather :class:`WebRTCRoomMqtt`): To stream a media stream to a (set of) peers.
     """
 
@@ -63,6 +64,7 @@ class WidgetStream(MediaStream):
     max_fps = Int(None, allow_none=True,
                 help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the valeus is None.")\
                 .tag(sync=True)
+    _html2canvas_start_streaming = Bool(False).tag(sync=True)
 
     @validate('max_fps')
     def _valid_fps(self, proposal):
@@ -71,93 +73,186 @@ class WidgetStream(MediaStream):
         return proposal['value']
 
 
+@register
 class ImageStream(MediaStream):
     """Represent a media stream by a static image"""
     _model_name = Unicode('ImageStreamModel').tag(sync=True)
 
-    image = Instance(Image, help="An ipywidgets.Image instance that will be the source of the media stream.")\
-            .tag(sync=True, **widget_serialization)
-
-
-@register
-class VideoStream(MediaStream):
-    """Represents a media source by a video.
-
-    The `value` of this widget accepts a byte string. The byte string is the
-    raw video data that you want the browser to display.  You can explicitly
-    define the format of the byte string using the `format` trait (which
-    defaults to 'mp4').
-    If you pass `"url"` to the `"format"` trait, `value` will be interpreted
-    as a URL as bytes encoded in ascii.
-    """
-    _model_name = Unicode('VideoStreamModel').tag(sync=True)
-
-    format = Unicode('mp4', help="The format of the video.").tag(sync=True)
-    value = Bytes(None, allow_none=True, help="The video data as a byte string.").tag(sync=True)
-    play = Bool(True, help='Plays the video or pauses it.').tag(sync=True)
-    loop = Bool(True, help='When true, the video will start from the beginning after finishing.').tag(sync=True)
+    image = Instance(
+        Image,
+        help="An ipywidgets.Image instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
 
     @classmethod
-    def from_file(cls, f, **kwargs):
-        """Create a `VideoStream` from a local file or file object.
+    def from_file(cls, filename, **kwargs):
+        """Create a `ImageStream` from a local file.
 
         Parameters
         ----------
-        f: str or file
-            The path or file object that will be read and its bytes assigned
-            to the value trait.
+        filename: str
+            The location of a file to read into the value from disk.
         **kwargs:
-            Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set from the content of a file.
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream`.
         """
-        if isinstance(f, string_types):
-            with open(f, 'rb') as f:
-                return cls(value=f.read(), **kwargs)
-        else:
-            if 'format' not in kwargs:
-                ext = os.path.splitext(f)[1]
-                if ext:
-                    kwargs['format'] = ext[1:]  # remove the .
-            return cls(value=f.read(), **kwargs)
+        return cls(image=Image.from_file(filename), **kwargs)
 
     @classmethod
     def from_url(cls, url, **kwargs):
-        """Create a `VideoStream` from a url.
-        This wil set the .value trait to the url, and the .format trait to
-        'url'
+        """Create a `ImageStream` from a url.
+        This will create a `ImageStream` from an Image using its url
 
         Parameters
         ----------
         url: str
-            The url of the file that will be assigned to the value trait.
+            The url of the file that will be used for the .image trait.
         **kwargs:
-            Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set to the url.
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream`.
         """
-        kwargs = dict(kwargs)
-        kwargs['format'] = 'url'
-        # for now we only support ascii
-        return cls(value=url.encode('ascii'), **kwargs)
+        return cls(image=Image.from_url(url), **kwargs)
 
     @classmethod
     def from_download(cls, url, **kwargs):
-        """Create a `VideoStream` from a url by downloading
-
+        """Create a `ImageStream` from a url by downloading
         Parameters
         ----------
         url: str
             The url of the file that will be downloadeded and its bytes
-            assigned to the value trait.
+            assigned to the value trait of the video trait.
+        **kwargs:
+            Extra keyword arguments for `ImageStream`
+        Returns an `ImageStream` with the value set from the content of a url.
+        """
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        image = Image(value=urlopen(url).read(), format=format)
+        return cls(image=image, **kwargs)
+
+
+@register
+class VideoStream(MediaStream):
+    """Represent a stream of a video element"""
+    _model_name = Unicode('VideoStreamModel').tag(sync=True)
+
+    video = Instance(
+        Video,
+        allow_none=False,
+        help="An ipywidgets.Video instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
+    playing = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
+
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Create a `VideoStream` from a local file.
+
+        Parameters
+        ----------
+        filename: str
+            The location of a file to read into the value from disk.
+        **kwargs:
+            Extra keyword arguments for `VideoStream`
+        Returns an `VideoStream`.
+        """
+        video = Video.from_file(filename, autoplay=False, controls=False)
+        return cls(video=video, **kwargs)
+
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        """Create a `VideoStream` from a url.
+        This will create a `VideoStream` from a Video using its url
+
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be used for the .video trait.
+        **kwargs:
+            Extra keyword arguments for `VideoStream`
+        Returns an `VideoStream`.
+        """
+        video = Video.from_url(url, autoplay=False, controls=False)
+        return cls(video=video, **kwargs)
+
+    @classmethod
+    def from_download(cls, url, **kwargs):
+        """Create a `VideoStream` from a url by downloading
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be downloadeded and its bytes
+            assigned to the value trait of the video trait.
         **kwargs:
             Extra keyword arguments for `VideoStream`
         Returns an `VideoStream` with the value set from the content of a url.
         """
-        if 'format' not in kwargs:
-            ext = os.path.splitext(url)[1]
-            if ext:
-                kwargs = dict(kwargs)
-                kwargs['format'] = ext[1:]  # remove the .
-        return cls(value=urlopen(url).read(), **kwargs)
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        video = Video(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
+        return cls(video=video, **kwargs)
+
+
+@register
+class AudioStream(MediaStream):
+    """Represent a stream of an audio element"""
+    _model_name = Unicode('AudioStreamModel').tag(sync=True)
+    _view_name = Unicode('AudioStreamView').tag(sync=True)
+
+    audio = Instance(
+        Audio,
+        help="An ipywidgets.Audio instance that will be the source of the media stream."
+    ).tag(sync=True, **widget_serialization)
+    playing = Bool(True, help='Plays the audiostream or pauses it.').tag(sync=True)
+
+    @classmethod
+    def from_file(cls, filename, **kwargs):
+        """Create a `AudioStream` from a local file.
+
+        Parameters
+        ----------
+        filename: str
+            The location of a file to read into the audio value from disk.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream`.
+        """
+        audio = Audio.from_file(filename, autoplay=False, controls=False)
+        return cls(audio=audio, **kwargs)
+
+    @classmethod
+    def from_url(cls, url, **kwargs):
+        """Create a `AudioStream` from a url.
+        This will create a `AudioStream` from an Audio using its url
+
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be used for the .audio trait.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream`.
+        """
+        audio = Audio.from_url(url, autoplay=False, controls=False)
+        return cls(audio=audio, **kwargs)
+
+    @classmethod
+    def from_download(cls, url, **kwargs):
+        """Create a `AudioStream` from a url by downloading
+        Parameters
+        ----------
+        url: str
+            The url of the file that will be downloadeded and its bytes
+            assigned to the value trait of the video trait.
+        **kwargs:
+            Extra keyword arguments for `AudioStream`
+        Returns an `AudioStream` with the value set from the content of a url.
+        """
+        ext = os.path.splitext(url)[1]
+        if ext:
+            format = ext[1:]
+        audio = Audio(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
+        return cls(audio=audio, **kwargs)
 
 
 @register
@@ -221,93 +316,53 @@ class CameraStream(MediaStream):
         constraints['video']['facingMode'] = facing_mode
         return CameraStream(constraints=constraints, **kwargs)
 
-def _memoryview_to_bytes(value, widget=None):
-    return bytes(value)
 
-
-@register
-class MediaRecorder(DOMWidget):
-    """Creates a recorder which allows to record a MediaStream widget, play the
-    record in the Notebook, and download it.
-    """
+class Recorder(DOMWidget):
     _model_module = Unicode('jupyter-webrtc').tag(sync=True)
     _view_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _model_name = Unicode('MediaRecorderModel').tag(sync=True)
-    _view_name = Unicode('MediaRecorderView').tag(sync=True)
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source of the video recording.")\
+    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source for recording.")\
                 .tag(sync=True, **widget_serialization)
-    data = Bytes(help='The byte object containing the video data after the recording finished.')\
-                .tag(sync=True, from_json=_memoryview_to_bytes)
-    filename = Unicode('recording', help='The filename used for downloading or auto saving.').tag(sync=True)
-    format = Unicode('webm', help='The format of the recording (e.g. webm/mp4).').tag(sync=True)
-    record = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
+    filename = Unicode('record', help='The filename used for downloading or auto saving.').tag(sync=True)
+    format = Unicode('webm', help='The format of the recording.').tag(sync=True)
+    recording = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
     autosave = Bool(False, help='If true, will save the data to a file once the recording is finished (based on filename and format)').tag(sync=True)
-
-    @observe('data')
-    def _check_autosave(self, change):
-        if len(self.data) and self.autosave:
-            self.save()
-
-
-    def play(self):
-        """Play the recording"""
-        self.send({'msg': 'play'})
+    _data_src = Unicode('').tag(sync=True)
 
     def download(self):
         """Download the recording (usually a popup appears in the browser)"""
         self.send({'msg': 'download'})
 
-    def save(self, filename=None):
-        """Save the data to a file, if no filename is given it is based on the filename trait and the format.
-
-        >>> recorder = MediaRecorder(filename='test', format='mp4')
-        >>> ...
-        >>> recorder.save()  # will save to test.mp4
-        >>> recorder.save('foo')  # will save to foo.mp4
-        >>> recorder.save('foo.dat')  # will save to foo.dat
-
-        """
-        filename = filename or self.filename
-        if '.' not in filename:
-            filename += '.' + self.format
-        if len(self.data) == 0:
-            raise ValueError('No data, did you record anything?')
-        with open(filename, 'wb') as f:
-            f.write(self.data)
-
-    _video_src = Unicode('').tag(sync=True)
-
-
-
-# monkey patch, same as https://github.com/jupyter-widgets/ipywidgets/pull/2146
-if 'from_json' not in widgets.Image.value.metadata:
-    widgets.Image.value.metadata['from_json'] = lambda js, obj: None if js is None else js.tobytes()
 
 @register
-class MediaImageRecorder(DOMWidget):
+class ImageRecorder(Recorder):
     """Creates a recorder which allows to grab an Image from a MediaStream widget.
     """
-    _model_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _view_module = Unicode('jupyter-webrtc').tag(sync=True)
-    _model_name = Unicode('MediaImageRecorderModel').tag(sync=True)
-    _view_name = Unicode('MediaImageRecorderView').tag(sync=True)
-    _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
-    _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
+    _model_name = Unicode('ImageRecorderModel').tag(sync=True)
+    _view_name = Unicode('ImageRecorderView').tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True,
-         help=MediaRecorder.stream.metadata['help'])\
-        .tag(sync=True, **widget_serialization)
-    image = Instance(Image, help='An instance of ipywidgets.Image that will receive the grabbed image.',
-        allow_none=True).tag(sync=True, **widget_serialization)
-    filename = Unicode('recording', help=MediaRecorder.filename.metadata['help']).tag(sync=True)
-    autosave = Bool(False, help=MediaRecorder.autosave.metadata['help'])
+    image = Instance(Image).tag(sync=True, **widget_serialization)
+    format = Unicode('png', help='The format of the image.').tag(sync=True)
+    _width = Unicode().tag(sync=True)
+    _height = Unicode().tag(sync=True)
 
-    def __init__(self, **kwargs):
-        super(MediaImageRecorder, self).__init__(**kwargs)
-        self.image.observe(self._check_autosave, 'value')
+    @traitlets.default('image')
+    def _default_image(self):
+        return Image(width=self._width, height=self._height, format=self.format)
+
+    @observe('_width')
+    def _update_image_width(self, change):
+        self.image.width = self._width
+
+    @observe('_height')
+    def _update_image_height(self, change):
+        self.image.height = self._height
+
+    @observe('format')
+    def _update_image_format(self, change):
+        self.image.format = self.format
 
     @observe('image')
     def _bind_image(self, change):
@@ -319,20 +374,10 @@ class MediaImageRecorder(DOMWidget):
         if len(self.image.value) and self.autosave:
             self.save()
 
-    @traitlets.default('image')
-    def _default_image(self):
-        return Image()
-
-    def grab(self):
-        self.send({'msg': 'grab'})
-
-    def download(self):
-        self.send({'msg': 'download'})
-
     def save(self, filename=None):
-        """Save the data to a file, if no filename is given it is based on the filename trait and the image.format.
+        """Save the image to a file, if no filename is given it is based on the filename trait and the format.
 
-        >>> recorder = MediaImageRecorder(filename='test', format='png')
+        >>> recorder = ImageRecorder(filename='test', format='png')
         >>> ...
         >>> recorder.save()  # will save to test.png
         >>> recorder.save('foo')  # will save to foo.png
@@ -341,11 +386,105 @@ class MediaImageRecorder(DOMWidget):
         """
         filename = filename or self.filename
         if '.' not in filename:
-            filename += '.' + self.image.format
+            filename += '.' + self.format
         if len(self.image.value) == 0:
             raise ValueError('No data, did you record anything?')
         with open(filename, 'wb') as f:
             f.write(self.image.value)
+
+
+@register
+class VideoRecorder(Recorder):
+    """Creates a recorder which allows to record a MediaStream widget, play the
+    record in the Notebook, and download it or turn it into a Video widget.
+    """
+    _model_name = Unicode('VideoRecorderModel').tag(sync=True)
+    _view_name = Unicode('VideoRecorderView').tag(sync=True)
+
+    video = Instance(Video).tag(sync=True, **widget_serialization)
+
+    @traitlets.default('video')
+    def _default_video(self):
+        return Video(format=self.format, controls=True)
+
+    @observe('format')
+    def _update_video_format(self, change):
+        self.video.format = self.format
+
+    @observe('video')
+    def _bind_video(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
+    def _check_autosave(self, change):
+        if len(self.video.value) and self.autosave:
+            self.save()
+
+    def save(self, filename=None):
+        """Save the video to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = VideoRecorder(filename='test', format='mp4')
+        >>> ...
+        >>> recorder.save()  # will save to test.mp4
+        >>> recorder.save('foo')  # will save to foo.mp4
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.video.value) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.video.value)
+
+
+@register
+class AudioRecorder(Recorder):
+    """Creates a recorder which allows to record the Audio of a MediaStream widget, play the
+    record in the Notebook, and download it or turn it into an Audio widget.
+    """
+    _model_name = Unicode('AudioRecorderModel').tag(sync=True)
+    _view_name = Unicode('AudioRecorderView').tag(sync=True)
+
+    audio = Instance(Audio).tag(sync=True, **widget_serialization)
+
+    @traitlets.default('audio')
+    def _default_audio(self):
+        return Audio(format=self.format, controls=True)
+
+    @observe('format')
+    def _update_audio_format(self, change):
+        self.audio.format = self.format
+
+    @observe('audio')
+    def _bind_video(self, change):
+        if change.old:
+            change.old.unobserve(self._check_autosave, 'value')
+        change.new.observe(self._check_autosave, 'value')
+
+    def _check_autosave(self, change):
+        if len(self.audio.value) and self.autosave:
+            self.save()
+
+    def save(self, filename=None):
+        """Save the audio to a file, if no filename is given it is based on the filename trait and the format.
+
+        >>> recorder = AudioRecorder(filename='test', format='mp3')
+        >>> ...
+        >>> recorder.save()  # will save to test.mp3
+        >>> recorder.save('foo')  # will save to foo.mp3
+        >>> recorder.save('foo.dat')  # will save to foo.dat
+
+        """
+        filename = filename or self.filename
+        if '.' not in filename:
+            filename += '.' + self.format
+        if len(self.audio.value) == 0:
+            raise ValueError('No data, did you record anything?')
+        with open(filename, 'wb') as f:
+            f.write(self.audio.value)
 
 
 @register

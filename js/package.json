@@ -28,12 +28,13 @@
     "watch:nbextension": "webpack --watch"
   },
   "devDependencies": {
-    "@jupyter-widgets/controls": "^1.3.0",
+    "@jupyter-widgets/controls": "^1.4.0",
     "@jupyterlab/services": "^2.0.3",
     "@types/chai": "^4.1.4",
     "@types/expect.js": "^0.3.29",
     "@types/mocha": "^5.2.4",
     "@types/sinon": "^5.0.1",
+    "arraybuffer-loader": "^1.0.6",
     "base64-image-loader": "^1.2.1",
     "chai": "^4.1.2",
     "json-loader": "^0.5.4",
@@ -52,7 +53,7 @@
     "sinon-chai": "^3.2.0",
     "style-loader": "^0.13.1",
     "ts-loader": "^4.4.2",
-    "typescript": "^2.9.2",
+    "typescript": "^3.0.1",
     "webpack": "^4.16.1",
     "webpack-cli": "^3.0.8"
   },

@@ -6,71 +6,53 @@
 Welcome to IPyWebRTC's documentation!
 =====================================
 
-IPyWebRTC gives you WebRTC IPython widgets in the Jupyter notebook.
+WebRTC and MediaStream API exposed in the Jupyter notebook/lab.
 
-Making a stream out of a video `ipyvolume.mp4 <ipyvolume.mp4>`_ (can be a same origin file for firefox only)
+Using ipywebrtc you can create a `MediaStream <api.html#ipywebrtc.webrtc.MediaStream>`_ out of:
+ * `Any ipywidget <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.WidgetStream>`_.
+ * A `video <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.VideoStream>`_ file.
+ * An `image <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.ImageStream>`_ file.
+ * An `audio <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.AudioStream>`_ file.
+ * Your `webcam/camera <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.CameraStream>`_.
+
+From this MediaStream you can:
+
+ * `Record a movie <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.VideoRecorder>`_.
+ * `Record an image snapshot <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.ImageRecorder>`_.
+ * `Record an audio fragment <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.AudioRecorder>`_.
+ * Stream it to peers using the simple `chat function <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.chat>`_.
+ * `Use it as a texture in ipyvolume <https://twitter.com/maartenbreddels/status/894983501996584961>`_.
 
 
-.. ipywidgets-display::
-    from ipywebrtc import VideoStream
-    video = VideoStream.from_file('ipyvolume.mp4', play=True)
-    video
+Installation
+============
+
+Pip users::
+
+  $ pip install ipywebrtc                             # will auto enable for notebook >= 5.3
+  $ jupyter labextension install jupyterlab-webrtc    # for jupyter lab
 
 
-Since video is a widget, we can control the play property using a toggle button.
+Conda users::
 
-.. ipywidgets-display::
-    from ipywebrtc import VideoStream
-    import ipywidgets as widgets
-    video = VideoStream.from_file('ipyvolume.mp4', play=True)
-    play_button = widgets.ToggleButton(description="Play")
-    widgets.jslink((play_button, 'value'), (video, 'play'))
-    widgets.VBox(children=[video, play_button])
+  $ conda install -c conda-forge ipywebrtc
+  $ jupyter labextension install jupyterlab-webrtc    # for jupyter lab
 
-Media recorder:
 
-.. ipywidgets-display::
-    from ipywebrtc import VideoStream, MediaRecorder
-    video = VideoStream.from_file('ipyvolume.mp4', play=True)
-    recorder = MediaRecorder(source=video)
-    recorder
 
-Camera stream (we can use camera facing user or facing environment):
 
-.. ipywidgets-display::
-    from ipywebrtc import CameraStream
-    CameraStream.facing_user()
-
-Making a 'chat room'
-
-.. ipywidgets-display::
-    import ipywebrtc
-    import ipywidgets as widgets
-    camera = ipywebrtc.CameraStream()
-    room = ipywebrtc.WebRTCRoomMqtt(stream=camera, room='readthedocs')
-    box = widgets.HBox(children=[])
-    widgets.jslink((room, 'streams'), (box, 'children'))
-    box
-
-Using a video as source stream instead of the camera (joining the same room)
-
-.. ipywidgets-display::
-    import ipywebrtc
-    import ipywidgets as widgets
-    video = ipywebrtc.VideoStream.from_file('ipyvolume.mp4', play=True)
-    room = ipywebrtc.WebRTCRoomMqtt(stream=video, room='readthedocs')
-    box = widgets.HBox(children=[])
-    widgets.jslink((room, 'streams'), (box, 'children'))
-    box
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Examples and API docs:
 
    VideoStream.ipynb
    CameraStream.ipynb
-   MediaRecorder.ipynb
-   MediaImageRecorder.ipynb
+   AudioStream.ipynb
+   WidgetStream.ipynb
+   VideoRecorder.ipynb
+   ImageRecorder.ipynb
+   AudioRecorder.ipynb
    api
 
 

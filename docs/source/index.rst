@@ -8,6 +8,8 @@ Welcome to IPyWebRTC's documentation!
 
 WebRTC and MediaStream API exposed in the Jupyter notebook/lab.
 
+`IPyWebRTC's GitHub repo <https://github.com/maartenbreddels/ipywebrtc/issues/new>`_.
+
 Using ipywebrtc you can create a `MediaStream <api.html#ipywebrtc.webrtc.MediaStream>`_ out of:
  * `Any ipywidget <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.WidgetStream>`_.
  * A `video <https://ipywebrtc.readthedocs.io/en/latest/api.html#ipywebrtc.webrtc.VideoStream>`_ file.

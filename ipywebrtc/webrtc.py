@@ -520,7 +520,7 @@ class WebRTCRoom(DOMWidget):
 
     room = Unicode('room').tag(sync=True)
     stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
-    id = Unicode(read_only=True).tag(sync=True)
+    room_id = Unicode(read_only=True).tag(sync=True)
     nickname = Unicode('anonymous').tag(sync=True)
     peers = List(Instance(WebRTCPeer), [], allow_none=False).tag(sync=True, **widget_serialization)
     streams = List(Instance(MediaStream), [], allow_none=False).tag(sync=True, **widget_serialization)

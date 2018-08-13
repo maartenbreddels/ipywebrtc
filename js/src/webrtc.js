@@ -749,24 +749,24 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
             _view_module_version: semver_range,
             room: 'room',
             stream: null,
-            id: widgets.uuid(),
+            room_id: widgets.uuid(),
             nickname: 'anonymous',
             peers: [],
             streams: []
         })
     },
     log: function() {
-        var args = [this.get('nickname') + ' ' +this.get('id') +': ']
+        var args = [this.get('nickname') + ' ' +this.get('room_id') +': ']
         args = args.concat(Array.prototype.slice.call(arguments))
         console.log.apply(null, args);
     },
     initialize: function() {
         WebRTCRoomModel.__super__.initialize.apply(this, arguments);
-        this.set('id',  widgets.uuid())
-        this.id = this.get('id')
+        this.set('room_id',  widgets.uuid())
+        this.room_id = this.get('room_id')
         this.room = this.get('room')
-        this.peers = {} // id (string) to WebRTCPeerModel
-        window['last_webrtc_room_' + this.id] = this
+        this.peers = {} // room_id (string) to WebRTCPeerModel
+        window['last_webrtc_room_' + this.room_id] = this
         var stream = this.get('stream')
         if(stream) {
             this.set('streams', [stream])
@@ -793,11 +793,11 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
                 widget_class: 'webrtc.WebRTCPeerModel', // ipywidgets6
             }, {
                 stream_local: this.get('stream'),
-                id_local: this.get('id'),
+                id_local: this.get('room_id'),
                 id_remote: from_id
         }).then(_.bind(function(peer) {
             peer.peer_msg_send = _.bind(function(msg) {
-                msg.id = this.get('id')
+                msg.room_id = this.get('room_id')
                 msg.to = from_id
                 this.log('send to peer', msg)
                 //console.log('sending to room', msg, from_id)
@@ -835,11 +835,11 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
         }, this))
     },
     on_room_msg: function(msg) {
-        var from_id = msg.id;
-        if(msg.id == this.id)
+        var from_id = msg.room_id;
+        if(msg.room_id == this.room_id)
             return; // skip my own msg'es
         if(msg.type == 'join') {
-            this.log('join from', msg.id)
+            this.log('join from', msg.room_id)
             this.peers[from_id] = this.create_peer(from_id).then(_.bind(function(peer) {
                 this.listen_to_remote_stream(peer)
                 peer.join().then(_.bind(function() {
@@ -852,11 +852,11 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
             }, this))
             this.log(': added peer', from_id)
             return peer;
-        } else if(msg.id) {
-            if(msg.to != this.id) {
+        } else if(msg.room_id) {
+            if(msg.to != this.room_id) {
                 return
             }
-            if(!this.peers[msg.id]) {
+            if(!this.peers[msg.room_id]) {
                 this.peers[from_id] = this.create_peer(from_id).then(_.bind(function(peer) {
                     this.listen_to_remote_stream(peer)
                     var peers = this.get('peers').slice()
@@ -867,18 +867,18 @@ var WebRTCRoomModel = widgets.DOMWidgetModel.extend({
                 }, this))
                 this.log('added peer', from_id)
             }
-            var peer = this.peers[msg.id]
+            var peer = this.peers[msg.room_id]
             if(peer) {
-                //console.log(this.id, ': peer', msg.id, peer, this, this.cid)
+                //console.log(this.room_id, ': peer', msg.room_id, peer, this, this.cid)
                 peer.then(_.bind(function(peer) {
-                    this.log('sending from', msg.id, ' to', msg.to, msg)
+                    this.log('sending from', msg.room_id, ' to', msg.to, msg)
                     peer.on_peer_msg(msg)
                 }, this))
             } else {
-                console.error('sending to unknown peer', msg.id)
+                console.error('sending to unknown peer', msg.room_id)
             }
         } else {
-            console.error('expected a to id to be present')
+            console.error('expected a to room_id to be present')
         }
     }
 }, {
@@ -906,7 +906,7 @@ var WebRTCRoomLocalModel = WebRTCRoomModel.extend({
         var callbacks = global_rooms[room] || []
         callbacks.push(_.bind(this.on_room_msg, this))
         global_rooms[room] = callbacks
-        this.room_msg_send({type: 'join', id: this.get('id')})
+        this.room_msg_send({type: 'join', room_id: this.get('room_id')})
 
     },
     room_msg_send: function(msg) {
@@ -949,7 +949,7 @@ var WebRTCRoomMqttModel = WebRTCRoomModel.extend({
         this.join()
     },
     join: function() {
-        this.room_msg_send({type: 'join', id: this.get('id')})
+        this.room_msg_send({type: 'join', room_id: this.get('room_id')})
 
     },
     room_msg_send: function(msg) {
@@ -971,7 +971,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
         })
     },
     log: function() {
-        var args = [this.get('id') +': ']
+        var args = [this.get('room_id') +': ']
         args = args.concat(Array.prototype.slice.call(arguments))
         console.log.apply(null, args);
     },
@@ -991,7 +991,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
                 Promise.all([remote_description_set, this.tracks_added])
                 .then(() => this.pc.createAnswer())
                 .then((sdp) => {
-                    console.log('sending sdp', this.id)
+                    console.log('sending sdp', this.room_id)
                     that.send_sdp(sdp)
                     that.pc.setLocalDescription(sdp)
                 })
@@ -1005,14 +1005,14 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
         WebRTCPeerModel.__super__.initialize.apply(this, arguments);
 
         var that = this;
-        var id = this.id = this.get('id_local')
+        var room_id = this.room_id = this.get('id_local')
         this.initiator = false
 
         var pc_config = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302", 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302']}]};
         //var pc_config = null;
         this.pc = new RTCPeerConnection(pc_config);
 
-        window['last_webrtc_'+id] = this
+        window['last_webrtc_'+room_id] = this
         //this.other = null
 
         if(this.get('stream_local')) {
@@ -1038,7 +1038,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
         }
         this.tracks_added.then(() => console.log('tracks added'))
         this.pc.onicecandidate = _.bind(function(event) {
-            console.log(this.id, 'onicecandidate', event.candidate)
+            console.log(this.room_id, 'onicecandidate', event.candidate)
             this.event_candidate = event
             this.send_ice_candidate(event.candidate)
         }, this)
@@ -1064,7 +1064,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
                     that.set('stream_remote', model)
                     //mo
                     that.save_changes()
-                    console.log(that.id, ': added stream_remote')
+                    console.log(that.room_id, ': added stream_remote')
                     return model;
                 });
         }, this)
@@ -1072,7 +1072,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
             console.log('onconnecting', name)
         }, this)
         this.pc.oniceconnectionstatechange = _.bind(function() {
-            console.log(this.id, 'ICE connection state', this.pc.iceConnectionState);
+            console.log(this.room_id, 'ICE connection state', this.pc.iceConnectionState);
             if(this.pc.iceConnectionState == 'disconnected') {
                 this.set('connected', false)
                 this.save_changes()
@@ -1090,7 +1090,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
         /*
         this doesn't seem to exist in chrome at least, lets rely on ice state change above
         this.pc.onconnectionstatechange = _.bind(function() {
-            console.log(this.id, 'connection state', this.pc.connectionState);
+            console.log(this.room_id, 'connection state', this.pc.connectionState);
             if(this.pc.connectionState == 'disconnected') {
                 this.set('connected', false)
                 this.save_changes()
@@ -1129,7 +1129,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
         var after_stream
         return this.tracks_added.then(() => {
             return new Promise((resolve, reject) => {
-                var id = that.get('id')
+                var room_id = that.get('room_id')
                 var offer = {
                   offerToReceiveAudio: 1,
                   offerToReceiveVideo: 1
@@ -1139,7 +1139,7 @@ var WebRTCPeerModel = widgets.DOMWidgetModel.extend({
                 .then((sdp)  => {
                     console.log('set local desc');
                     that.pc.setLocalDescription(sdp)
-                    console.log(that.id, 'send sdp')
+                    console.log(that.room_id, 'send sdp')
                     that.send_sdp(sdp)
                     resolve()
                 })

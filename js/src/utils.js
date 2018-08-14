@@ -29,6 +29,7 @@ export
 async function onCanPlay(videoElement) {
     // wait till a video element is ready to play, and can be drawn on a canvas
     return new Promise((resolve, reject) => {
+        // see https://github.com/webrtc/samples/pull/853
         if(videoElement.readyState >= 3) {
             resolve()
         } else {

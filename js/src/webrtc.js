@@ -121,7 +121,7 @@ var StreamModel = MediaStreamModel.extend({
         this.on('change:playing', this.updatePlay, this);
     },
 
-    captureStream: function() {
+    captureStream: async function() {
         if (!this.createView) {
             this.createView = _.once(() => {
                 return this.widget_manager.create_view(this.get(this.type)).then((view) => {
@@ -130,32 +130,26 @@ var StreamModel = MediaStreamModel.extend({
                 });
             });
         }
-        return new Promise((resolve, reject) => {
-            let widget = this.get(this.type);
-            if(!widget)
-                return reject(new Error('no media widget passed'))
-            this.createView().then(() => {
-                if(this.media.captureStream || this.media.mozCaptureStream) {
-                    // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                    var makeStream = () => {
-                        this.updatePlay();
+        let widget = this.get(this.type);
+        if(!widget)
+            throw new Error('no media widget passed')
+        await this.createView();
+        if(this.media.captureStream || this.media.mozCaptureStream) {
+            // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+            var makeStream = () => {
+                this.updatePlay();
 
-                        if(this.media.captureStream) {
-                            resolve(this.media.captureStream());
-                        } else if(this.media.mozCaptureStream) {
-                            resolve(this.media.mozCaptureStream());
-                        }
-                    };
-                    // see https://github.com/webrtc/samples/pull/853
-                    this.media.addEventListener('canplay', makeStream);
-                    if(this.media.readyState >= 3) {
-                        makeStream();
-                    }
-                } else {
-                    reject(new Error('captureStream not supported for this browser'));
+                if(this.media.captureStream) {
+                    return this.media.captureStream();
+                } else if(this.media.mozCaptureStream) {
+                    return this.media.mozCaptureStream();
                 }
-            });
-        });
+            };
+            await utils.onCanPlay(this.media);
+            return makeStream()
+        } else {
+            throw  new Error('captureStream not supported for this browser');
+        }
     },
 
     updatePlay: function() {

@@ -605,10 +605,8 @@ var ImageRecorderModel = RecorderModel.extend({
             // turn the mediastream into a video element
             let video = document.createElement('video');
             video.srcObject = mediaStream;
+            video.play()
             return utils.onCanPlay(video).then(() => {
-                console.log('onCanPlay')
-                video.play() // required on chrome, otherwise we get a black screen
-
                 // and the video element can be drawn onto a canvas
                 let canvas = document.createElement('canvas')
                 let context = canvas.getContext('2d');

@@ -29,9 +29,10 @@ export
 async function onCanPlay(videoElement) {
     // wait till a video element is ready to play, and can be drawn on a canvas
     return new Promise((resolve, reject) => {
-        videoElement.oncanplay = () => resolve();
         if(videoElement.readyState >= 3) {
             resolve()
+        } else {
+            videoElement.addEventListener('canplay', resolve);
         }
     });
 }

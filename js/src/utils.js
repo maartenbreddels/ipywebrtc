@@ -37,7 +37,23 @@ async function onCanPlay(videoElement) {
         }
     });
 }
-
+export
+async function canvasToBlob(canvas, mimeType) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => resolve(blob), mimeType);
+    });
+}
+export
+async function blobToBytes(blob) {
+    return new Promise((resolve, reject) => {
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(blob);
+        reader.onloadend = () => {
+            var bytes = new Uint8Array(reader.result);
+            resolve(bytes);
+        }
+    })
+}
 export
 async function imageWidgetToCanvas(widget, canvas) {
     // this code should move to jupyter-widgets's ImageModel widget, so all this logic is in one place

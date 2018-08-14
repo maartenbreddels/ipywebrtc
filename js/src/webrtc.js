@@ -593,48 +593,37 @@ var ImageRecorderModel = RecorderModel.extend({
         this.type = 'image';
     },
 
-    snapshot: function() {
+    snapshot: async function() {
         var mimeType = this.type + '/' + this.get('format');
-        return captureStream(this.get('stream')).then((mediaStream) => {
-            // turn the mediastream into a video element
-            let video = document.createElement('video');
-            video.srcObject = mediaStream;
-            video.play()
-            return utils.onCanPlay(video).then(() => {
-                // and the video element can be drawn onto a canvas
-                let canvas = document.createElement('canvas')
-                let context = canvas.getContext('2d');
-                let height = video.videoHeight;
-                let width = video.videoWidth;
-                canvas.height = height;
-                canvas.width = width;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        var mediaStream = await captureStream(this.get('stream'));
+        // turn the mediastream into a video element
+        let video = document.createElement('video');
+        video.srcObject = mediaStream;
+        video.play()
+        await utils.onCanPlay(video);
+        // and the video element can be drawn onto a canvas
+        let canvas = document.createElement('canvas')
+        let context = canvas.getContext('2d');
+        let height = video.videoHeight;
+        let width = video.videoWidth;
+        canvas.height = height;
+        canvas.width = width;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // from the canvas we can get the underlying encoded data
-                // TODO: check support for toBlob, or find a polyfill
-                return new Promise((resolve, reject) => {
-                    canvas.toBlob((blob) => {
-                        this.set('_data_src', window.URL.createObjectURL(blob));
-                        this._last_blob = blob;
+        // from the canvas we can get the underlying encoded data
+        // TODO: check support for toBlob, or find a polyfill
+        var blob = await utils.canvasToBlob(canvas, mimeType);
+        this.set('_data_src', window.URL.createObjectURL(blob));
+        this._last_blob = blob;
 
-                        var reader = new FileReader()
-                        reader.readAsArrayBuffer(blob)
-                        reader.onloadend = () => {
-                            var bytes = new Uint8Array(reader.result)
-                            this.get(this.type).set('value', new DataView(bytes.buffer));
-                            this.get(this.type).save_changes();
-                            this.set('_height', height.toString() + 'px');
-                            this.set('_width', width.toString() + 'px');
-                            this.save_changes();
-                            resolve()
-                        }
-                    }, mimeType);
-                });
+        var bytes = await utils.blobToBytes(blob);
 
-                this.set('recording', false);
-                this.save_changes();
-            });
-        });
+        this.get(this.type).set('value', new DataView(bytes.buffer));
+        this.get(this.type).save_changes();
+        this.set('_height', height.toString() + 'px');
+        this.set('_width', width.toString() + 'px');
+        this.set('recording', false);
+        this.save_changes();
     },
 
     updateRecord: function() {
@@ -647,7 +636,8 @@ var ImageRecorderModel = RecorderModel.extend({
         if (this.get('_data_src') != '') {
             URL.revokeObjectURL(this.get('_data_src'));
         }
-        this.snapshot()
+        if(this.get('recording'))
+            this.snapshot()
     },
 
     download: function() {

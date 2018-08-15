@@ -29,13 +29,31 @@ export
 async function onCanPlay(videoElement) {
     // wait till a video element is ready to play, and can be drawn on a canvas
     return new Promise((resolve, reject) => {
-        videoElement.oncanplay = () => resolve();
+        // see https://github.com/webrtc/samples/pull/853
         if(videoElement.readyState >= 3) {
             resolve()
+        } else {
+            videoElement.addEventListener('canplay', resolve);
         }
     });
 }
-
+export
+async function canvasToBlob(canvas, mimeType) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => resolve(blob), mimeType);
+    });
+}
+export
+async function blobToBytes(blob) {
+    return new Promise((resolve, reject) => {
+        var reader = new FileReader();
+        reader.readAsArrayBuffer(blob);
+        reader.onloadend = () => {
+            var bytes = new Uint8Array(reader.result);
+            resolve(bytes);
+        }
+    })
+}
 export
 async function imageWidgetToCanvas(widget, canvas) {
     // this code should move to jupyter-widgets's ImageModel widget, so all this logic is in one place

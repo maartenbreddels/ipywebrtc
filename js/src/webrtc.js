@@ -121,7 +121,7 @@ var StreamModel = MediaStreamModel.extend({
         this.on('change:playing', this.updatePlay, this);
     },
 
-    captureStream: function() {
+    captureStream: async function() {
         if (!this.createView) {
             this.createView = _.once(() => {
                 return this.widget_manager.create_view(this.get(this.type)).then((view) => {
@@ -130,32 +130,26 @@ var StreamModel = MediaStreamModel.extend({
                 });
             });
         }
-        return new Promise((resolve, reject) => {
-            let widget = this.get(this.type);
-            if(!widget)
-                return reject(new Error('no media widget passed'))
-            this.createView().then(() => {
-                if(this.media.captureStream || this.media.mozCaptureStream) {
-                    // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
-                    var makeStream = () => {
-                        this.updatePlay();
+        let widget = this.get(this.type);
+        if(!widget)
+            throw new Error('no media widget passed')
+        await this.createView();
+        if(this.media.captureStream || this.media.mozCaptureStream) {
+            // following https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/video-pc/js/main.js
+            var makeStream = () => {
+                this.updatePlay();
 
-                        if(this.media.captureStream) {
-                            resolve(this.media.captureStream());
-                        } else if(this.media.mozCaptureStream) {
-                            resolve(this.media.mozCaptureStream());
-                        }
-                    };
-                    // see https://github.com/webrtc/samples/pull/853
-                    this.media.addEventListener('canplay', makeStream);
-                    if(this.media.readyState >= 3) {
-                        makeStream();
-                    }
-                } else {
-                    reject(new Error('captureStream not supported for this browser'));
+                if(this.media.captureStream) {
+                    return this.media.captureStream();
+                } else if(this.media.mozCaptureStream) {
+                    return this.media.mozCaptureStream();
                 }
-            });
-        });
+            };
+            await utils.onCanPlay(this.media);
+            return makeStream()
+        } else {
+            throw  new Error('captureStream not supported for this browser');
+        }
     },
 
     updatePlay: function() {
@@ -599,50 +593,37 @@ var ImageRecorderModel = RecorderModel.extend({
         this.type = 'image';
     },
 
-    snapshot: function() {
+    snapshot: async function() {
         var mimeType = this.type + '/' + this.get('format');
-        return captureStream(this.get('stream')).then((mediaStream) => {
-            // turn the mediastream into a video element
-            let video = document.createElement('video');
-            video.srcObject = mediaStream;
-            return utils.onCanPlay(video).then(() => {
-                console.log('onCanPlay')
-                video.play() // required on chrome, otherwise we get a black screen
+        var mediaStream = await captureStream(this.get('stream'));
+        // turn the mediastream into a video element
+        let video = document.createElement('video');
+        video.srcObject = mediaStream;
+        video.play()
+        await utils.onCanPlay(video);
+        // and the video element can be drawn onto a canvas
+        let canvas = document.createElement('canvas')
+        let context = canvas.getContext('2d');
+        let height = video.videoHeight;
+        let width = video.videoWidth;
+        canvas.height = height;
+        canvas.width = width;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // and the video element can be drawn onto a canvas
-                let canvas = document.createElement('canvas')
-                let context = canvas.getContext('2d');
-                let height = video.videoHeight;
-                let width = video.videoWidth;
-                canvas.height = height;
-                canvas.width = width;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // from the canvas we can get the underlying encoded data
+        // TODO: check support for toBlob, or find a polyfill
+        var blob = await utils.canvasToBlob(canvas, mimeType);
+        this.set('_data_src', window.URL.createObjectURL(blob));
+        this._last_blob = blob;
 
-                // from the canvas we can get the underlying encoded data
-                // TODO: check support for toBlob, or find a polyfill
-                return new Promise((resolve, reject) => {
-                    canvas.toBlob((blob) => {
-                        this.set('_data_src', window.URL.createObjectURL(blob));
-                        this._last_blob = blob;
+        var bytes = await utils.blobToBytes(blob);
 
-                        var reader = new FileReader()
-                        reader.readAsArrayBuffer(blob)
-                        reader.onloadend = () => {
-                            var bytes = new Uint8Array(reader.result)
-                            this.get(this.type).set('value', new DataView(bytes.buffer));
-                            this.get(this.type).save_changes();
-                            this.set('_height', height.toString() + 'px');
-                            this.set('_width', width.toString() + 'px');
-                            this.save_changes();
-                            resolve()
-                        }
-                    }, mimeType);
-                });
-
-                this.set('recording', false);
-                this.save_changes();
-            });
-        });
+        this.get(this.type).set('value', new DataView(bytes.buffer));
+        this.get(this.type).save_changes();
+        this.set('_height', height.toString() + 'px');
+        this.set('_width', width.toString() + 'px');
+        this.set('recording', false);
+        this.save_changes();
     },
 
     updateRecord: function() {
@@ -655,7 +636,8 @@ var ImageRecorderModel = RecorderModel.extend({
         if (this.get('_data_src') != '') {
             URL.revokeObjectURL(this.get('_data_src'));
         }
-        this.snapshot()
+        if(this.get('recording'))
+            this.snapshot()
     },
 
     download: function() {

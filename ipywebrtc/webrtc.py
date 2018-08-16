@@ -6,14 +6,12 @@ try:
 except ImportError:
     from urllib.request import urlopen  # py3
 from traitlets import (
-    observe,
-    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate
+    observe, Float,
+    Bool, Dict, Instance, Int, List, TraitError, Unicode, validate
 )
 from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
-from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
-import ipywidgets as widgets
 
 logger = logging.getLogger("jupyter-webrtc")
 semver_range_frontend = "~" + ipywebrtc._version.__version_js__
@@ -142,6 +140,8 @@ class VideoStream(MediaStream):
         help="An ipywidgets.Video instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
     playing = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
+    currentTime = Float(0.0, help='The current time of the video.').tag(sync=True)
+    duration = Float(0.0, help='The duration of the video.').tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -204,6 +204,8 @@ class AudioStream(MediaStream):
         help="An ipywidgets.Audio instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
     playing = Bool(True, help='Plays the audiostream or pauses it.').tag(sync=True)
+    currentTime = Float(0.0, help='The current time of the audio.').tag(sync=True)
+    duration = Float(0.0, help='The duration of the audio.').tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):

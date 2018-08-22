@@ -80,20 +80,25 @@ var ImageStreamModel = MediaStreamModel.extend({
         this.canvas.height = this.get('height')
         // I was hoping this should do it
         imageWidgetToCanvas(this.get('image'), this.canvas)
+        this.get('image').on('change:value', () => {
+            this.sync_image()
+        })
     },
 
-    captureStream: function() {
-        return new Promise((resolve, reject) => {
-            // not sure if firefox uses moz prefix also on a canvas
-            if(this.canvas.captureStream) {
-                // TODO: add a fps trait
-                resolve(this.canvas.captureStream())
-                // but for some reason we need to do it again
-                imageWidgetToCanvas(this.get('image'), this.canvas)
-            } else {
-                reject(new Error('captureStream not supported for this browser'));
-            }
-        });
+    sync_image: function() {
+        // not sure if firefox uses moz prefix also on a canvas
+        if(this.canvas.captureStream) {
+            // TODO: add a fps trait
+            // but for some reason we need to do it again
+            imageWidgetToCanvas(this.get('image'), this.canvas)
+        } else {
+            reject(new Error('captureStream not supported for this browser'));
+        }
+    },
+
+    captureStream: async function() {
+        this.sync_image()
+        return this.canvas.captureStream();
     },
 
     close: function() {

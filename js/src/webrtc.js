@@ -604,11 +604,18 @@ var ImageRecorderModel = RecorderModel.extend({
         // turn the mediastream into a video element
         let video = document.createElement('video');
         video.srcObject = mediaStream;
-        video.play()
+        video.play();
         await utils.onCanPlay(video);
+
+        // Ugly hack: in case it fails to start the video, the height would be 0 
+        if (video.videoHeight == 0) {
+            return this.snapshot();
+        }
+
         // and the video element can be drawn onto a canvas
         let canvas = document.createElement('canvas')
         let context = canvas.getContext('2d');
+
         let height = video.videoHeight;
         let width = video.videoWidth;
         canvas.height = height;
@@ -632,17 +639,20 @@ var ImageRecorderModel = RecorderModel.extend({
     },
 
     updateRecord: function() {
-        var source = this.get('stream');
-        if(!source) {
-            new Error('No stream specified');
-            return;
-        }
+        if (this.get('recording'))
+        {
+            var source = this.get('stream');
+            if(!source) {
+                new Error('No stream specified');
+                return;
+            }
 
-        if (this.get('_data_src') != '') {
-            URL.revokeObjectURL(this.get('_data_src'));
-        }
-        if(this.get('recording'))
+            if (this.get('_data_src') != '') {
+                URL.revokeObjectURL(this.get('_data_src'));
+            }
+
             this.snapshot()
+        }
     },
 
     download: function() {

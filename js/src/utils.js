@@ -25,6 +25,7 @@ function downloadBlob(blob, filename) {
         window.URL.revokeObjectURL(url);
     }, 100);
 }
+
 export
 async function onCanPlay(videoElement) {
     // wait till a video element is ready to play, and can be drawn on a canvas
@@ -37,6 +38,19 @@ async function onCanPlay(videoElement) {
         }
     });
 }
+
+export
+async function onLoadedMetaData(videoElement) {
+    // before the event is fired, videoHeight might be 0
+    // see https://stackoverflow.com/questions/4129102/html5-video-dimensions
+    return new Promise((resolve, reject) => {
+        if(videoElement.videoHeight > 0)
+            resolve()
+        else
+            videoElement.addEventListener('loadedmetadata', resolve);
+    });
+}
+
 export
 async function canvasToBlob(canvas, mimeType) {
     return new Promise((resolve, reject) => {

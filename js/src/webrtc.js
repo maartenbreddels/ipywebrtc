@@ -606,6 +606,7 @@ var ImageRecorderModel = RecorderModel.extend({
         video.srcObject = mediaStream;
         video.play()
         await utils.onCanPlay(video);
+        await utils.onLoadedMetaData(video);
         // and the video element can be drawn onto a canvas
         let canvas = document.createElement('canvas')
         let context = canvas.getContext('2d');

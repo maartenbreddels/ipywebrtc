@@ -90,9 +90,9 @@ var ImageStreamModel = MediaStreamModel.extend({
         if(this.canvas.captureStream) {
             // TODO: add a fps trait
             // but for some reason we need to do it again
-            imageWidgetToCanvas(this.get('image'), this.canvas)
+            imageWidgetToCanvas(this.get('image'), this.canvas);
         } else {
-            reject(new Error('captureStream not supported for this browser'));
+            new Error('captureStream not supported for this browser');
         }
     },
 

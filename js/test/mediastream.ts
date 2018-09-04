@@ -1,6 +1,6 @@
 import { expect, assert } from 'chai';
 import {DummyManager} from './dummy-manager';
-import * as jupyter_webrtc from '..';
+import * as jupyter_webrtc from '../lib';
 import {create_model, create_model_webrtc, create_view, create_video_stream} from './widget-utils'
 
 // use(require("chai-as-promised"))

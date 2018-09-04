@@ -1,20 +1,20 @@
 
 export
 function download(data, filename) {
-    let a = document.createElement('a')
-    a.download = filename
-    a.href = data
+    let a = document.createElement('a');
+    a.download = filename;
+    a.href = data;
     // see https://stackoverflow.com/questions/18480474/how-to-save-an-image-from-canvas
     if (document.createEvent) {
-        let e = document.createEvent("MouseEvents");
-        e.initMouseEvent("click", true, true, window,
+        let e = document.createEvent('MouseEvents');
+        e.initMouseEvent('click', true, true, window,
                          0, 0, 0, 0, 0, false, false, false,
                          false, 0, null);
 
         a.dispatchEvent(e);
     } else if (lnk.fireEvent) {
-        a.fireEvent("onclick");
-    }    
+        a.fireEvent('onclick');
+    }
 }
 
 export
@@ -31,8 +31,8 @@ async function onCanPlay(videoElement) {
     // wait till a video element is ready to play, and can be drawn on a canvas
     return new Promise((resolve, reject) => {
         // see https://github.com/webrtc/samples/pull/853
-        if(videoElement.readyState >= 3) {
-            resolve()
+        if (videoElement.readyState >= 3) {
+            resolve();
         } else {
             videoElement.addEventListener('canplay', resolve);
         }
@@ -44,8 +44,8 @@ async function onLoadedMetaData(videoElement) {
     // before the event is fired, videoHeight might be 0
     // see https://stackoverflow.com/questions/4129102/html5-video-dimensions
     return new Promise((resolve, reject) => {
-        if(videoElement.videoHeight > 0)
-            resolve()
+        if (videoElement.videoHeight > 0)
+            resolve();
         else
             videoElement.addEventListener('loadedmetadata', resolve);
     });
@@ -60,13 +60,13 @@ async function canvasToBlob(canvas, mimeType) {
 export
 async function blobToBytes(blob) {
     return new Promise((resolve, reject) => {
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.readAsArrayBuffer(blob);
         reader.onloadend = () => {
-            var bytes = new Uint8Array(reader.result);
+            const bytes = new Uint8Array(reader.result);
             resolve(bytes);
-        }
-    })
+        };
+    });
 }
 export
 async function imageWidgetToCanvas(widget, canvas) {
@@ -101,12 +101,13 @@ async function imageWidgetToCanvas(widget, canvas) {
     context.drawImage(el, 0, 0);
     return new Promise((resolve, reject) => {
         el.onload = () => {
-            canvas.width = el.width
+            canvas.width = el.width;
             canvas.height = el.height;
             context.drawImage(el, 0, 0);
-            if(typeof oldurl !== 'string')
+            if (typeof oldurl !== 'string') {
                 URL.revokeObjectURL(url);
-            resolve()
-        }
+            }
+            resolve();
+        };
     });
 }

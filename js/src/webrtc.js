@@ -115,6 +115,8 @@ var StreamModel = MediaStreamModel.extend({
     defaults: function() {
         return _.extend(MediaStreamModel.prototype.defaults(), {
             playing: true,
+            currentTime: 0.0,
+            duration: 0.0,
         });
     },
 
@@ -124,6 +126,7 @@ var StreamModel = MediaStreamModel.extend({
         this.media = undefined;
 
         this.on('change:playing', this.updatePlay, this);
+        this.on('change:currentTime', this.updateCurrentTime, this);
     },
 
     captureStream: async function() {
@@ -132,6 +135,14 @@ var StreamModel = MediaStreamModel.extend({
                 return this.widget_manager.create_view(this.get(this.type)).then((view) => {
                     this.media_wid = view;
                     this.media = this.media_wid.el;
+                    this.media.addEventListener('durationchange', () => {
+                        this.set('duration', this.media.duration);
+                        this.save_changes();
+                    });
+                    this.media.addEventListener('timeupdate', () => {
+                        this.set('currentTime', this.media.currentTime);
+                        this.save_changes();
+                    });
                 });
             });
         }
@@ -162,6 +173,14 @@ var StreamModel = MediaStreamModel.extend({
             this.media.play();
         } else {
             this.media.pause();
+        }
+    },
+
+    updateCurrentTime: function() {
+        let currentTime = this.get('currentTime');
+        if (this.media.currentTime != currentTime)
+        {
+            this.media.currentTime = currentTime;
         }
     },
 

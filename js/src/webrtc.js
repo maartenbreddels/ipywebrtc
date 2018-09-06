@@ -843,7 +843,6 @@ export class WebRTCRoomModel extends widgets.DOMWidgetModel {
                 return peer;
             });
             this.log(': added peer', from_id);
-            return peer;
         } else if (msg.room_id) {
             if (msg.to !== this.room_id) {
                 return;
@@ -931,7 +930,7 @@ export class WebRTCRoomMqttModel extends WebRTCRoomModel {
           //client.publish('jupyter-webrtc/room-a/present', 'you|me', {retain:true});
           //client.publish('jupyter-webrtc/room-a/join', 'Hello mqtt');
         });
-        client.on('message', (message, topic) => {
+        client.on('message', (topic, message) => {
             const msg = JSON.parse(message);
             console.log('msg received', message, msg);
             if (topic === this.topic_join) {

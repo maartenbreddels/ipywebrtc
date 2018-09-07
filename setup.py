@@ -153,7 +153,7 @@ setup_args = {
 
     'author': 'Maarten Breddels',
     'author_email': 'maartenbreddels@gmail.com',
-    'url': 'http://jupyter.org',
+    'url': 'https://github.com/maartenbreddels/ipywebrtc',
     'keywords': [
         'ipython',
         'jupyter',

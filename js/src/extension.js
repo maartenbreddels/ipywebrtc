@@ -6,8 +6,8 @@
 if (window.require) {
     window.require.config({
         map: {
-            "*" : {
-                "jupyter-webrtc": "nbextensions/jupyter-webrtc/index",
+            '*' : {
+                'jupyter-webrtc': 'nbextensions/jupyter-webrtc/index',
             }
         }
     });

@@ -606,6 +606,12 @@ export class ImageRecorderModel extends RecorderModel {
         let video = document.createElement('video');
         video.srcObject = mediaStream;
         video.play();
+        // if stream is canvas source, ensure we get a frame even if fps is 0
+        for (let track of mediaStream.getVideoTracks()) {
+            if (track.requestFrame) {
+                track.requestFrame();
+            }
+        }
         await utils.onCanPlay(video);
         await utils.onLoadedMetaData(video);
         // and the video element can be drawn onto a canvas

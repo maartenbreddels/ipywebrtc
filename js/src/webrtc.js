@@ -463,7 +463,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
 
         const mimeType = this.type + '/' + this.get('format');
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-            throw new Error('The mimeType', mimeType, 'is not supported for record on this browser');
+            throw new Error(`The mimeType ${mimeType} is not supported for record on this browser`);
         }
 
         if (this.get('recording')) {

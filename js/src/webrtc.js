@@ -260,9 +260,9 @@ export class WidgetStreamModel extends MediaStreamModel {
 
         // If the widget already has a captureStream -> use it
         if (typeof this.get('widget').captureStream === 'function') {
-            // TODO: use the fps attr of captureStream once it's here
+            const fps = this.get('max_fps');
             this.captureStream = () => {
-                return this.get('widget').captureStream();
+                return this.get('widget').captureStream(fps);
             };
         }
         // Else try to stream the first view of this widget

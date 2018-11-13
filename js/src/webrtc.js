@@ -447,6 +447,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
 
         this.mediaRecorder = null;
         this.chunks = [];
+        this.stopping = null;
     }
 
     handleCustomMessage(content) {
@@ -483,29 +484,42 @@ class RecorderModel extends widgets.DOMWidgetModel {
                 };
             });
         } else {
-            this.mediaRecorder.onstop = (e) => {
-                if (this.get('_data_src') !== '') {
-                    URL.revokeObjectURL(this.get('_data_src'));
-                }
-                const blob = new Blob(this.chunks, { 'type' : mimeType });
-                this.set('_data_src', window.URL.createObjectURL(blob));
-                this.save_changes();
+            this.stopping = new Promise((resolve, reject) => {
+                this.mediaRecorder.onstop = (e) => {
+                    if (this.get('_data_src') !== '') {
+                        URL.revokeObjectURL(this.get('_data_src'));
+                    }
+                    const blob = new Blob(this.chunks, { 'type' : mimeType });
+                    this.set('_data_src', window.URL.createObjectURL(blob));
+                    this.save_changes();
 
-                const reader = new FileReader();
-                reader.readAsArrayBuffer(blob);
-                reader.onloadend = () => {
-                    const bytes = new Uint8Array(reader.result);
-                    this.get(this.type).set('value', new DataView(bytes.buffer));
-                    this.get(this.type).save_changes();
+                    const reader = new FileReader();
+                    reader.readAsArrayBuffer(blob);
+                    reader.onloadend = () => {
+                        const bytes = new Uint8Array(reader.result);
+                        this.get(this.type).set('value', new DataView(bytes.buffer));
+                        this.get(this.type).save_changes();
+                        resolve();
+                    };
                 };
-            };
+            });
+            this.stopping.then(() => {
+                this.stopping = null;
+            });
             this.mediaRecorder.stop();
         }
     }
 
     download() {
         if (this.chunks.length === 0) {
-            new Error('Nothing to download');
+            if (this.stopping === null) {
+                new Error('Nothing to download');
+            } else {
+                // Re-trigger after stop completes
+                this.stopping.then(() => {
+                    this.download();
+                });
+            }
             return;
         }
         let blob = new Blob(this.chunks, {type: this.type + '/' + this.get('format')});

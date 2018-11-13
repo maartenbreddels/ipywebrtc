@@ -402,6 +402,7 @@ class VideoRecorder(Recorder):
     _view_name = Unicode('VideoRecorderView').tag(sync=True)
 
     video = Instance(Video).tag(sync=True, **widget_serialization)
+    codecs = Unicode('', help='Optional codecs for the recording.').tag(sync=True)
 
     @traitlets.default('video')
     def _default_video(self):
@@ -449,6 +450,7 @@ class AudioRecorder(Recorder):
     _view_name = Unicode('AudioRecorderView').tag(sync=True)
 
     audio = Instance(Audio).tag(sync=True, **widget_serialization)
+    codecs = Unicode('', help='Optional codecs for the recording.').tag(sync=True)
 
     @traitlets.default('audio')
     def _default_audio(self):

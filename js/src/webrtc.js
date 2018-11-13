@@ -434,6 +434,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
             stream: null,
             filename: 'record',
             format: 'webm',
+            codecs: '',
             recording: false,
             _data_src: '',
          };
@@ -455,6 +456,15 @@ class RecorderModel extends widgets.DOMWidgetModel {
         }
     }
 
+    get mimeType() {
+        const codecs = this.get('codecs') || '';
+        let mimeType = `${this.type}/${this.get('format')}`;
+        if (codecs) {
+            mimeType += `; codecs="${codecs}"`;
+        }
+        return mimeType;
+    }
+
     updateRecord() {
         const source = this.get('stream');
         if (!source) {
@@ -462,7 +472,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
             return;
         }
 
-        const mimeType = this.type + '/' + this.get('format');
+        const mimeType = this.mimeType;
         if (!MediaRecorder.isTypeSupported(mimeType)) {
             new Error('The mimeType', mimeType, 'is not supported for record on this browser');
             return;
@@ -508,7 +518,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
             new Error('Nothing to download');
             return;
         }
-        let blob = new Blob(this.chunks, {type: this.type + '/' + this.get('format')});
+        let blob = new Blob(this.chunks, {type: this.mimeType});
         let filename = this.get('filename');
         if (filename.indexOf('.') < 0) {
           filename = this.get('filename') + '.' + this.get('format');

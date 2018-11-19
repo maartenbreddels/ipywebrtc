@@ -352,8 +352,9 @@ class ImageRecorder(Recorder):
     def __init__(self, format='png', filename=Undefined, recording=False, autosave=False, **kwargs):
         super(ImageRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
-        # Set up initial observer on child:
-        self.image.observe(self._check_autosave, 'value')
+        if 'image' not in kwargs:
+            # Set up initial observer on child:
+            self.image.observe(self._check_autosave, 'value')
 
     @traitlets.default('image')
     def _default_image(self):
@@ -413,8 +414,9 @@ class VideoRecorder(Recorder):
     def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
         super(VideoRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
-        # Set up initial observer on child:
-        self.video.observe(self._check_autosave, 'value')
+        if 'video' not in kwargs:
+            # Set up initial observer on child:
+            self.video.observe(self._check_autosave, 'value')
 
     @traitlets.default('video')
     def _default_video(self):
@@ -466,8 +468,9 @@ class AudioRecorder(Recorder):
     def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
         super(AudioRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
-        # Set up initial observer on child:
-        self.audio.observe(self._check_autosave, 'value')
+        if 'audio' not in kwargs:
+            # Set up initial observer on child:
+            self.audio.observe(self._check_autosave, 'value')
 
     @traitlets.default('audio')
     def _default_audio(self):

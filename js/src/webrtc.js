@@ -153,7 +153,7 @@ class StreamModel extends MediaStreamModel {
                 return this.media.mozCaptureStream();
             }
         } else {
-            throw  new Error('captureStream not supported for this browser');
+            throw new Error('captureStream not supported for this browser');
         }
     }
 
@@ -462,14 +462,12 @@ class RecorderModel extends widgets.DOMWidgetModel {
     updateRecord() {
         const source = this.get('stream');
         if (!source) {
-            new Error('No stream specified');
-            return;
+            throw new Error('No stream specified');
         }
 
         const mimeType = this.type + '/' + this.get('format');
         if (!MediaRecorder.isTypeSupported(mimeType)) {
-            new Error('The mimeType', mimeType, 'is not supported for record on this browser');
-            return;
+            throw new Error(`The mimeType ${mimeType} is not supported for record on this browser`);
         }
 
         if (this.get('recording')) {
@@ -516,13 +514,12 @@ class RecorderModel extends widgets.DOMWidgetModel {
     download() {
         if (this.chunks.length === 0) {
             if (this.stopping === null) {
-                new Error('Nothing to download');
-            } else {
-                // Re-trigger after stop completes
-                this.stopping.then(() => {
-                    this.download();
-                });
+                throw new Error('Nothing to download');
             }
+            // Re-trigger after stop completes
+            this.stopping.then(() => {
+                this.download();
+            });
             return;
         }
         let blob = new Blob(this.chunks, {type: this.type + '/' + this.get('format')});
@@ -653,8 +650,7 @@ export class ImageRecorderModel extends RecorderModel {
     updateRecord() {
         const source = this.get('stream');
         if (!source) {
-            new Error('No stream specified');
-            return;
+            throw new Error('No stream specified');
         }
 
         if (this.get('_data_src') !== '') {

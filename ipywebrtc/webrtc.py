@@ -7,7 +7,8 @@ except ImportError:
     from urllib.request import urlopen  # py3
 from traitlets import (
     observe,
-    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate
+    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate,
+    Undefined
 )
 from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
 from ipython_genutils.py3compat import string_types
@@ -348,6 +349,13 @@ class ImageRecorder(Recorder):
     _width = Unicode().tag(sync=True)
     _height = Unicode().tag(sync=True)
 
+    def __init__(self, format='png', filename=Undefined, recording=False, autosave=False, **kwargs):
+        super(ImageRecorder, self).__init__(
+            format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
+        if 'image' not in kwargs:
+            # Set up initial observer on child:
+            self.image.observe(self._check_autosave, 'value')
+
     @traitlets.default('image')
     def _default_image(self):
         return Image(width=self._width, height=self._height, format=self.format)
@@ -403,6 +411,13 @@ class VideoRecorder(Recorder):
 
     video = Instance(Video).tag(sync=True, **widget_serialization)
 
+    def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
+        super(VideoRecorder, self).__init__(
+            format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
+        if 'video' not in kwargs:
+            # Set up initial observer on child:
+            self.video.observe(self._check_autosave, 'value')
+
     @traitlets.default('video')
     def _default_video(self):
         return Video(format=self.format, controls=True)
@@ -450,6 +465,13 @@ class AudioRecorder(Recorder):
 
     audio = Instance(Audio).tag(sync=True, **widget_serialization)
 
+    def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
+        super(AudioRecorder, self).__init__(
+            format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
+        if 'audio' not in kwargs:
+            # Set up initial observer on child:
+            self.audio.observe(self._check_autosave, 'value')
+
     @traitlets.default('audio')
     def _default_audio(self):
         return Audio(format=self.format, controls=True)
@@ -459,7 +481,7 @@ class AudioRecorder(Recorder):
         self.audio.format = self.format
 
     @observe('audio')
-    def _bind_video(self, change):
+    def _bind_audio(self, change):
         if change.old:
             change.old.unobserve(self._check_autosave, 'value')
         change.new.observe(self._check_autosave, 'value')

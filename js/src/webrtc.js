@@ -45,8 +45,10 @@ export class MediaStreamView extends widgets.DOMWidgetView {
         this.video.controls = true;
         this.pWidget.addClass('jupyter-widgets');
         this.pWidget.addClass('widget-image');
+        
+        this.initPromise = this.model.captureStream();
 
-        this.model.captureStream().then((stream) => {
+        this.initPromise.then((stream) => {
             this.video.srcObject = stream;
             this.el.appendChild(this.video);
             this.video.play();
@@ -58,10 +60,11 @@ export class MediaStreamView extends widgets.DOMWidgetView {
     }
 
     remove() {
-        this.model.captureStream().then((stream) => {
+        this.initPromise.then((stream) => {
             this.video.pause();
             this.video.srcObject = null;
         });
+        this.initPromise = null;
         return super.remove.apply(this, arguments);
     }
 }
@@ -447,6 +450,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
 
         this.mediaRecorder = null;
         this.chunks = [];
+        this.stopping = null;
     }
 
     handleCustomMessage(content) {
@@ -481,29 +485,42 @@ class RecorderModel extends widgets.DOMWidgetModel {
                 };
             });
         } else {
-            this.mediaRecorder.onstop = (e) => {
-                if (this.get('_data_src') !== '') {
-                    URL.revokeObjectURL(this.get('_data_src'));
-                }
-                const blob = new Blob(this.chunks, { 'type' : mimeType });
-                this.set('_data_src', window.URL.createObjectURL(blob));
-                this.save_changes();
+            this.stopping = new Promise((resolve, reject) => {
+                this.mediaRecorder.onstop = (e) => {
+                    if (this.get('_data_src') !== '') {
+                        URL.revokeObjectURL(this.get('_data_src'));
+                    }
+                    const blob = new Blob(this.chunks, { 'type' : mimeType });
+                    this.set('_data_src', window.URL.createObjectURL(blob));
+                    this.save_changes();
 
-                const reader = new FileReader();
-                reader.readAsArrayBuffer(blob);
-                reader.onloadend = () => {
-                    const bytes = new Uint8Array(reader.result);
-                    this.get(this.type).set('value', new DataView(bytes.buffer));
-                    this.get(this.type).save_changes();
+                    const reader = new FileReader();
+                    reader.readAsArrayBuffer(blob);
+                    reader.onloadend = () => {
+                        const bytes = new Uint8Array(reader.result);
+                        this.get(this.type).set('value', new DataView(bytes.buffer));
+                        this.get(this.type).save_changes();
+                        resolve();
+                    };
                 };
-            };
+            });
+            this.stopping.then(() => {
+                this.stopping = null;
+            });
             this.mediaRecorder.stop();
         }
     }
 
     download() {
         if (this.chunks.length === 0) {
-            throw new Error('Nothing to download');
+            if (this.stopping === null) {
+                throw new Error('Nothing to download');
+            }
+            // Re-trigger after stop completes
+            this.stopping.then(() => {
+                this.download();
+            });
+            return;
         }
         let blob = new Blob(this.chunks, {type: this.type + '/' + this.get('format')});
         let filename = this.get('filename');

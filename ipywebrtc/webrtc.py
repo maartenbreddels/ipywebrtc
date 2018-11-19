@@ -397,6 +397,9 @@ class ImageRecorder(Recorder):
 class VideoRecorder(Recorder):
     """Creates a recorder which allows to record a MediaStream widget, play the
     record in the Notebook, and download it or turn it into a Video widget.
+
+    For help on supported values for the "codecs" attribute, see
+    https://stackoverflow.com/questions/41739837/all-mime-types-supported-by-mediarecorder-in-firefox-and-chrome
     """
     _model_name = Unicode('VideoRecorderModel').tag(sync=True)
     _view_name = Unicode('VideoRecorderView').tag(sync=True)
@@ -445,6 +448,9 @@ class VideoRecorder(Recorder):
 class AudioRecorder(Recorder):
     """Creates a recorder which allows to record the Audio of a MediaStream widget, play the
     record in the Notebook, and download it or turn it into an Audio widget.
+
+    For help on supported values for the "codecs" attribute, see
+    https://stackoverflow.com/questions/41739837/all-mime-types-supported-by-mediarecorder-in-firefox-and-chrome
     """
     _model_name = Unicode('AudioRecorderModel').tag(sync=True)
     _view_name = Unicode('AudioRecorderView').tag(sync=True)

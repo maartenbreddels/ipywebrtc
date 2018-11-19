@@ -263,9 +263,12 @@ export class WidgetStreamModel extends MediaStreamModel {
 
         // If the widget already has a captureStream -> use it
         if (typeof this.get('widget').captureStream === 'function') {
-            // TODO: use the fps attr of captureStream once it's here
+            const fps = this.get('max_fps');
             this.captureStream = () => {
-                return this.get('widget').captureStream();
+                if (fps === null || fps === undefined) {
+                    return this.get('widget').captureStream();
+                }
+                return this.get('widget').captureStream(fps);
             };
         }
         // Else try to stream the first view of this widget
@@ -285,14 +288,12 @@ export class WidgetStreamModel extends MediaStreamModel {
                     // If the widget view is a canvas or a video element
                     const capturable_obj = this.find_capturable_obj(this.rendered_view.el);
                     if (capturable_obj) {
-                        // TODO: use the fps attr of captureStream once it's here
                         return this._captureStream(capturable_obj);
                     }
 
                     // Else use html2canvas
                     this.canvas = document.createElement('canvas');
                     this.set('_html2canvas_start_streaming', true);
-                    // TODO: use the fps attr of captureStream once it's here
                     return this._captureStream(this.canvas);
                 });
             };
@@ -304,18 +305,18 @@ export class WidgetStreamModel extends MediaStreamModel {
             const fps = this.get('max_fps');
 
             if (capturable_obj.captureStream) {
-                if (fps || fps === 0) {
-                    resolve(capturable_obj.captureStream(fps));
-                } else {
+                if (fps === null || fps === undefined) {
                     resolve(capturable_obj.captureStream());
+                } else {
+                    resolve(capturable_obj.captureStream(fps));
                 }
             }
 
             if (capturable_obj.mozCaptureStream) {
-                if (fps || fps === 0) {
-                    resolve(capturable_obj.mozCaptureStream(fps));
-                } else {
+                if (fps === null || fps === undefined) {
                     resolve(capturable_obj.mozCaptureStream());
+                } else {
+                    resolve(capturable_obj.mozCaptureStream(fps));
                 }
             }
 
@@ -357,7 +358,7 @@ export class WidgetStreamModel extends MediaStreamModel {
                         https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream */
                     } else {
                         let waitingTime = 0;
-                        if (fps !== null) {
+                        if (fps !== null && fps !== undefined) {
                             waitingTime = 1000 / fps - timeSinceLastFrame;
                             if (waitingTime < 0) {
                                 waitingTime = 0;

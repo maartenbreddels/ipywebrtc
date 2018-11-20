@@ -45,7 +45,7 @@ export class MediaStreamView extends widgets.DOMWidgetView {
         this.video.controls = true;
         this.pWidget.addClass('jupyter-widgets');
         this.pWidget.addClass('widget-image');
-        
+
         this.initPromise = this.model.captureStream();
 
         this.initPromise.then((stream) => {
@@ -60,6 +60,10 @@ export class MediaStreamView extends widgets.DOMWidgetView {
     }
 
     remove() {
+        if (this.initPromise === null) {
+            // Remove already called
+            return;
+        }
         this.initPromise.then((stream) => {
             this.video.pause();
             this.video.srcObject = null;

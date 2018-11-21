@@ -349,7 +349,7 @@ class ImageRecorder(Recorder):
     _width = Unicode().tag(sync=True)
     _height = Unicode().tag(sync=True)
 
-    def __init__(self, format='png', filename=Undefined, recording=False, autosave=False, **kwargs):
+    def __init__(self, format='png', filename=Recorder.filename.default_value, recording=False, autosave=False, **kwargs):
         super(ImageRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
         if 'image' not in kwargs:
@@ -415,7 +415,7 @@ class VideoRecorder(Recorder):
     video = Instance(Video).tag(sync=True, **widget_serialization)
     codecs = Unicode('', help='Optional codecs for the recording, e.g. "vp8" or "vp9, opus".').tag(sync=True)
 
-    def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
+    def __init__(self, format='webm', filename=Recorder.filename.default_value, recording=False, autosave=False, **kwargs):
         super(VideoRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
         if 'video' not in kwargs:
@@ -473,7 +473,7 @@ class AudioRecorder(Recorder):
     audio = Instance(Audio).tag(sync=True, **widget_serialization)
     codecs = Unicode('', help='Optional codecs for the recording, e.g. "opus".').tag(sync=True)
 
-    def __init__(self, format='webm', filename=Undefined, recording=False, autosave=False, **kwargs):
+    def __init__(self, format='webm', filename=Recorder.filename.default_value, recording=False, autosave=False, **kwargs):
         super(AudioRecorder, self).__init__(
             format=format, filename=filename, recording=recording, autosave=autosave, **kwargs)
         if 'audio' not in kwargs:

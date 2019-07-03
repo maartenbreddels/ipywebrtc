@@ -65,6 +65,6 @@ $ cd ipywebrtc
 $ pip install -e .
 $ jupyter nbextension install --py --symlink --sys-prefix ipywebrtc
 $ jupyter nbextension enable --py --sys-prefix ipywebrtc
-$ jupyter labextension install link js
+$ jupyter labextension link js
 $ jupyter lab --watch  # for quick rebuilds
 ```

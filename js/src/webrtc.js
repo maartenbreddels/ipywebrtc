@@ -2,6 +2,11 @@ import * as widgets from '@jupyter-widgets/base';
 import * as _  from 'underscore';
 require('webrtc-adapter');
 import * as html2canvas from 'html2canvas';
+
+// Workaround for JupyterLab: "ws" is not defined
+// https://github.com/maartenbreddels/ipywebrtc/issues/55
+window.ws = global.WebSocket;
+
 import * as mqtt from 'mqtt';
 import * as utils from './utils';
 const semver_range = '~' + require('../package.json').version;

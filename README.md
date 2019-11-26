@@ -54,7 +54,7 @@ To install:
 
 ```
 $ pip install ipywebrtc                             # will auto enable for notebook >= 5.3
-$ jupyter labextension install jupyter-webrtc       # for jupyter lab
+$ jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyter-webrtc       # for jupyter lab
 ```
 
 For a development installation (requires npm),

@@ -35,11 +35,14 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.napoleon',  # support for NumPy-style docstrings
 	'nbsphinx',
     ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+napoleon_use_rtype = False
 
 html_extra_path = ['ipyvolume.mp4', 'Big.Buck.Bunny.mp3', 'Big.Buck.Bunny.mp4']
 # The suffix(es) of source filenames.

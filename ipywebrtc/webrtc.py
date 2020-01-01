@@ -92,38 +92,37 @@ class ImageStream(MediaStream):
         ----------
         filename: str
             The location of a file to read into the value from disk.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `ImageStream`
-        Returns an `ImageStream`.
         """
         return cls(image=Image.from_file(filename), **kwargs)
 
     @classmethod
     def from_url(cls, url, **kwargs):
         """Create a `ImageStream` from a url.
+
         This will create a `ImageStream` from an Image using its url
 
         Parameters
         ----------
         url: str
             The url of the file that will be used for the .image trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `ImageStream`
-        Returns an `ImageStream`.
         """
         return cls(image=Image.from_url(url), **kwargs)
 
     @classmethod
     def from_download(cls, url, **kwargs):
         """Create a `ImageStream` from a url by downloading
+
         Parameters
         ----------
         url: str
             The url of the file that will be downloadeded and its bytes
             assigned to the value trait of the video trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `ImageStream`
-        Returns an `ImageStream` with the value set from the content of a url.
         """
         ext = os.path.splitext(url)[1]
         if ext:
@@ -152,9 +151,8 @@ class VideoStream(MediaStream):
         ----------
         filename: str
             The location of a file to read into the value from disk.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream`.
         """
         video = Video.from_file(filename, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
@@ -162,15 +160,15 @@ class VideoStream(MediaStream):
     @classmethod
     def from_url(cls, url, **kwargs):
         """Create a `VideoStream` from a url.
+
         This will create a `VideoStream` from a Video using its url
 
         Parameters
         ----------
         url: str
             The url of the file that will be used for the .video trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream`.
         """
         video = Video.from_url(url, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
@@ -178,14 +176,15 @@ class VideoStream(MediaStream):
     @classmethod
     def from_download(cls, url, **kwargs):
         """Create a `VideoStream` from a url by downloading
+
         Parameters
         ----------
         url: str
             The url of the file that will be downloadeded and its bytes
             assigned to the value trait of the video trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `VideoStream`
-        Returns an `VideoStream` with the value set from the content of a url.
+
         """
         ext = os.path.splitext(url)[1]
         if ext:
@@ -214,9 +213,8 @@ class AudioStream(MediaStream):
         ----------
         filename: str
             The location of a file to read into the audio value from disk.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `AudioStream`
-        Returns an `AudioStream`.
         """
         audio = Audio.from_file(filename, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
@@ -224,15 +222,15 @@ class AudioStream(MediaStream):
     @classmethod
     def from_url(cls, url, **kwargs):
         """Create a `AudioStream` from a url.
+
         This will create a `AudioStream` from an Audio using its url
 
         Parameters
         ----------
         url: str
             The url of the file that will be used for the .audio trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `AudioStream`
-        Returns an `AudioStream`.
         """
         audio = Audio.from_url(url, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
@@ -240,14 +238,14 @@ class AudioStream(MediaStream):
     @classmethod
     def from_download(cls, url, **kwargs):
         """Create a `AudioStream` from a url by downloading
+
         Parameters
         ----------
         url: str
             The url of the file that will be downloadeded and its bytes
             assigned to the value trait of the video trait.
-        **kwargs:
+        **kwargs
             Extra keyword arguments for `AudioStream`
-        Returns an `AudioStream` with the value set from the content of a url.
         """
         ext = os.path.splitext(url)[1]
         if ext:
@@ -288,7 +286,7 @@ class CameraStream(MediaStream):
         ----------
         audio: bool
             Capture audio or not
-        kwargs:
+        **kwargs
             Extra keyword arguments passed to the `CameraStream`
         """
         return cls._facing(facing_mode='user', audio=audio, **kwargs)
@@ -301,7 +299,7 @@ class CameraStream(MediaStream):
         ----------
         audio: bool
             Capture audio or not
-        kwargs:
+        **kwargs
             Extra keyword arguments passed to the `CameraStream`
         """
         return cls._facing(facing_mode='environment', audio=audio, **kwargs)

@@ -1,5 +1,0 @@
-ipywebrtc==0.3.0
-ipywidgets>=7.4.0
-traitlets
-nbsphinx
-recommonmark

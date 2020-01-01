@@ -19,3 +19,5 @@ dependencies:
   - setuptools
   - pillow
   - scikit-image
+  - pythreejs
+  - ipyleaflet

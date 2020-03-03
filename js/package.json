@@ -55,11 +55,11 @@
     "ts-loader": "^4.4.2",
     "tslint": "^5.11.0",
     "typescript": "^3.0.1",
-    "webpack": "^4.16.1",
+    "webpack": "^4.42.0",
     "webpack-cli": "^3.0.8"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "^1.0 || ^2.0",
+    "@jupyter-widgets/base": "^1.0 || ^2.0 || ^3.0",
     "mqtt": "^2.11.0",
     "underscore": "^1.8.3",
     "webrtc-adapter": "^4.2.2",

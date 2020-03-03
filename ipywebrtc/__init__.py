@@ -1,21 +1,39 @@
 import random
 from IPython.display import display
 import ipywidgets as widgets
-from ._version import version_info, __version__
-from .webrtc import *
+from ._version import version_info, __version__  # noqa
+from .webrtc import *  # noqa
+
+
+def _prefix():
+    import sys
+    from pathlib import Path
+    prefix = sys.prefix
+    here = Path(__file__).parent
+    # for when in dev mode
+    if (here.parent / 'share/jupyter/nbextensions/jupyter-webrtc').parent.exists():
+        prefix = here.parent
+    return prefix
+
+
+def _jupyter_labextension_paths():
+    return [{
+        'src': f'{_prefix()}/share/jupyter/labextensions/jupyter-webrtc/',
+        'dest': 'jupyter-webrtc',
+    }]
 
 
 def _jupyter_nbextension_paths():
     return [{
         'section': 'notebook',
-        'src': 'static',
+        'src': f'{_prefix()}/share/jupyter/nbextensions/jupyter-webrtc/',
         'dest': 'jupyter-webrtc',
         'require': 'jupyter-webrtc/extension'
     }]
 
 
 def _random_room():
-    return "".join(chr(ord('0')+random.randint(0, 9)) for k in range(6))
+    return "".join(chr(ord('0') + random.randint(0, 9)) for k in range(6))
 
 
 def chat(room=None, stream=None, **kwargs):

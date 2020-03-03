@@ -1,0 +1,15 @@
+name: ipywebrtc-dev
+channels:
+    - conda-forge
+dependencies:
+    - pip
+    - yarn
+    - jupyter-packaging
+    - jupyterlab=3
+    - ipywidgets>=7.6
+    - flake8
+    - nbsphinx
+    - sphinx
+    - sphinx_rtd_theme
+    - pygments==2.6.1
+    - jupyter-sphinx

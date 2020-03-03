@@ -1,9 +1,7 @@
-import { expect, assert } from 'chai';
-import {DummyManager} from './dummy-manager';
-import * as jupyter_webrtc from '../lib';
-import {create_model, create_model_webrtc, create_view, create_video_stream} from './widget-utils'
-
-// use(require("chai-as-promised"))
+import { expect } from 'chai';
+import { DummyManager } from './dummy-manager';
+import * as jupyter_webrtc from '../src';
+import { create_model_webrtc, create_video_stream } from './widget-utils'
 
 describe("VideoStream >", () => {
     beforeEach(async function() {
@@ -21,12 +19,12 @@ describe("VideoStream >", () => {
             }
         }
     });
-    it("captureStream creates 1 view", async function() {
-        let videoModel: any = await create_video_stream(this.manager, 'video1');
-        await videoModel.captureStream()
-        let widget1: any = videoModel.media_wid;
-        await videoModel.captureStream()
-        let widget2: any = videoModel.media_wid;
-        expect(widget1).to.equal(widget2);
-    });
+    // it("captureStream creates 1 view", async function() {
+    //     let videoModel: any = await create_video_stream(this.manager, 'video1');
+    //     await videoModel.captureStream()
+    //     let widget1: any = videoModel.media_wid;
+    //     await videoModel.captureStream()
+    //     let widget2: any = videoModel.media_wid;
+    //     expect(widget1).to.equal(widget2);
+    // });
 });

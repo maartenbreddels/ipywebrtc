@@ -1,9 +1,4 @@
 var webpackConfig = require('./webpack.config.js');
-// add the .ts loader
-webpackConfig[1].module.rules.push({ test: /\.ts?$/, loader: 'ts-loader'})
-// remove the json loader (gives issues)
-webpackConfig[1].module.rules.splice(2, 1)
-
 var webpack = require('webpack');
 
 module.exports = function(config) {
@@ -11,29 +6,30 @@ module.exports = function(config) {
     basePath: '',
     frameworks: ['mocha', 'chai', 'sinon'],
     files: [
-        {pattern: 'test/index.ts'},
+        {pattern: 'test_js/test/index.js'},
     ],
-    exclude: ['**/embed.js'],
+    exclude: ['**/embed.js', 'src/**'],
     preprocessors: {
-        'test/**/*.ts': ['webpack', 'sourcemap']
+        'test_js/test/index.js': ['webpack', 'sourcemap']
     },
     webpack: {
       module: webpackConfig[1].module,
       devtool: 'source-map',
       mode: 'development',
       resolve: {
-            extensions: ['.ts', '.js']
+            extensions: ['.js']
       },
       plugins: [
           // see https://github.com/webpack-contrib/karma-webpack/issues/109#issuecomment-224961264
           new webpack.SourceMapDevToolPlugin({
             filename: null, // if no value is provided the sourcemap is inlined
-            test: /\.(ts|js)($|\?)/i // process .js and .ts files only
-          })
+            test: /\.(js)($|\?)/i // process .js files only
+          }),
+          new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+            process: 'process/browser',
+          }),
         ],
-    },
-    mime: {
-      'text/x-typescript':  ['ts']
     },
     mochaReporter: {
        showDiff: true

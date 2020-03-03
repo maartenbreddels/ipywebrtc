@@ -17,7 +17,7 @@ async function create_model(manager, module: string, model: string, view: string
             model_id: id,
     }, args );
     return model_widget;
-   
+
 }
 
 export
@@ -30,7 +30,7 @@ declare function require(string): string;
 
 export
 async function create_video_stream(manager, id: string, options = {}) {
-    let video_data: any = require('arraybuffer-loader!../../docs/source/Big.Buck.Bunny.mp4')
+    let video_data: any = require('arraybuffer-loader!../../../docs/source/Big.Buck.Bunny.mp4')
     // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: {buffer: new DataView((new Uint8Array(video_data)).buffer)}, format: 'mp4'});
     // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: new Uint8Array(video_data), format: 'mp4'});
     let videoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: new DataView((new Uint8Array(video_data)).buffer), format: 'mp4'});
@@ -38,7 +38,7 @@ async function create_video_stream(manager, id: string, options = {}) {
 }
 
 
-let image_data: any = require('arraybuffer-loader!./jupyter.jpg')
+let image_data: any = require('arraybuffer-loader!../../test/jupyter.jpg')
 export {image_data};
 
 export
@@ -74,7 +74,7 @@ async function create_figure_scatter(manager, x, y) {
         preserve_domain: {}, _view_module_version: '*', _view_module: 'bqplot'})
     let figureModel;
     try {
-        figureModel = await create_model_bqplot(manager, 'Figure', 'figure1', {scale_x: scales['x'], scale_y: scales['y'], 
+        figureModel = await create_model_bqplot(manager, 'Figure', 'figure1', {scale_x: scales['x'], scale_y: scales['y'],
             layout: 'IPY_MODEL_layout_figure1', _dom_classes: [],
             figure_padding_y: 0, fig_margin: {bottom: 0, left: 0, right: 0, top: 0},
             marks: ['IPY_MODEL_scatter1']})

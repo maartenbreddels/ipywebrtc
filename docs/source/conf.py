@@ -35,20 +35,20 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.napoleon',  # support for NumPy-style docstrings
 	'nbsphinx',
     ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+napoleon_use_rtype = False
+
 html_extra_path = ['ipyvolume.mp4', 'Big.Buck.Bunny.mp3', 'Big.Buck.Bunny.mp4']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
-source_parsers = {
-    '.md': 'recommonmark.parser.CommonMarkParser',
-}
+source_suffix = ['.rst']
 
 # The master toctree document.
 master_doc = 'index'
@@ -109,7 +109,7 @@ except:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 
 # -- Options for HTMLHelp output ------------------------------------------

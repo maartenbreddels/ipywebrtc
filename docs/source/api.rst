@@ -16,7 +16,7 @@ ipywebrtc.webrtc
 ----------------
 
 .. automodule:: ipywebrtc.webrtc
-    :members: MediaStream, VideoStream, CameraStream, WidgetStream, ImageStream, VideoRecorder, ImageRecorder, AudioRecorder, WebRTCPeer, WebRTCRoom, WebRTCRoomLocal, WebRTCRoomMqtt
+    :members: MediaStream, VideoStream, AudioStream, CameraStream, WidgetStream, ImageStream, Recorder, VideoRecorder, ImageRecorder, AudioRecorder, WebRTCPeer, WebRTCRoom, WebRTCRoomLocal, WebRTCRoomMqtt
     :undoc-members:
     :show-inheritance:
 

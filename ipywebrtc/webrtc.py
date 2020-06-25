@@ -63,7 +63,7 @@ class WidgetStream(MediaStream):
     widget = Instance(DOMWidget, allow_none=False, help='An instance of ipywidgets.DOMWidget that will be the source of the MediaStream.')\
                 .tag(sync=True, **widget_serialization)
     max_fps = Int(None, allow_none=True,
-                help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the valeus is None.")\
+                help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the value is None.")\
                 .tag(sync=True)
     _html2canvas_start_streaming = Bool(False).tag(sync=True)
 

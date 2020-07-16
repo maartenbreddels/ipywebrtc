@@ -7,10 +7,12 @@ except ImportError:
     from urllib.request import urlopen  # py3
 from traitlets import (
     observe,
-    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate,
+    Bool, Bytes, Dict, Instance, Int, List, TraitError, CUnicode, Unicode, validate,
     Undefined
 )
-from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
+from ipywidgets import (
+    DOMWidget, Image, Video, Audio, register, widget_serialization, link
+)
 from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
@@ -83,6 +85,8 @@ class ImageStream(MediaStream):
         Image,
         help="An ipywidgets.Image instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
+    width = CUnicode(help="Width of the video in pixels.").tag(sync=True)
+    height = CUnicode(help="Height of the video in pixels.").tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -130,6 +134,20 @@ class ImageStream(MediaStream):
         image = Image(value=urlopen(url).read(), format=format)
         return cls(image=image, **kwargs)
 
+    def __init__(self, *args, **kwargs):
+        super(ImageStream, self).__init__(*args, **kwargs)
+        self._width_link = link((self, "width"), (self.image, "width"))
+        self._height_link = link((self, "height"), (self.image, "height"))
+
+    @observe('image')
+    def _update_links(self, change):
+        if (not hasattr(self, "_width_link")):
+            return
+        self._width_link.unlink()
+        self._width_link = link((self, "width"), (change.new, "width"))
+        self._height_link.unlink()
+        self._height_link = link((self, "height"), (change.new, "height"))
+
 
 @register
 class VideoStream(MediaStream):
@@ -142,6 +160,8 @@ class VideoStream(MediaStream):
         help="An ipywidgets.Video instance that will be the source of the media stream."
     ).tag(sync=True, **widget_serialization)
     playing = Bool(True, help='Plays the videostream or pauses it.').tag(sync=True)
+    width = CUnicode(help="Width of the video in pixels.").tag(sync=True)
+    height = CUnicode(help="Height of the video in pixels.").tag(sync=True)
 
     @classmethod
     def from_file(cls, filename, **kwargs):
@@ -191,6 +211,20 @@ class VideoStream(MediaStream):
             format = ext[1:]
         video = Video(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        super(VideoStream, self).__init__(*args, **kwargs)
+        self._width_link = link((self, "width"), (self.video, "width"))
+        self._height_link = link((self, "height"), (self.video, "height"))
+
+    @observe('video')
+    def _update_links(self, change):
+        if (not hasattr(self, "_width_link")):
+            return
+        self._width_link.unlink()
+        self._width_link = link((self, "width"), (change.new, "width"))
+        self._height_link.unlink()
+        self._height_link = link((self, "height"), (change.new, "height"))
 
 
 @register

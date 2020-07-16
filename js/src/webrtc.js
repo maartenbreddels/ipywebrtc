@@ -62,6 +62,43 @@ export class MediaStreamView extends widgets.DOMWidgetView {
             text.innerHTML = 'Error creating view for mediastream: ' + error.message;
             this.el.appendChild(text);
         });
+
+        this.model.on("change:width", this._update_width, this);
+        this.model.on("change:height", this._update_height, this);
+    }
+
+    _update_width() {
+        let width = this.model.get('width');
+        if (width !== undefined && width.length > 0) {
+            this.video.setAttribute('width', width);
+        } else {
+            this.video.removeAttribute('width');
+        }
+
+        // When resized, the source video restarts, and we need to call capture
+        // again
+        this._capture();
+    }
+
+    _update_height() {
+        let height = this.model.get('height');
+        if (height !== undefined && height.length > 0) {
+            this.video.setAttribute('height', height);
+        } else {
+            this.video.removeAttribute('height');
+        }
+
+        // When resized, the source video restarts, and we need to call capture
+        // again
+        this._capture();
+    }
+
+    _capture() {
+        this.capturePromise = this.model.captureStream();
+        this.capturePromise.then((stream) => {
+            this.video.srcObject = stream;
+            this.video.play();
+        });
     }
 
     remove() {
@@ -84,6 +121,8 @@ export class ImageStreamModel extends MediaStreamModel {
         return {...super.defaults(),
             _model_name: 'ImageStreamModel',
             image: null,
+            width: null,
+            height: null,
         };
     }
 
@@ -187,6 +226,8 @@ export class VideoStreamModel extends StreamModel {
         return { ...super.defaults(),
             _model_name: 'VideoStreamModel',
             video: null,
+            width: null,
+            height: null,
         };
     }
 

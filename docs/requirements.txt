@@ -1,0 +1,5 @@
+ipykernel
+ipywidgets
+ipyleaflet
+pythreejs
+nbsphinx

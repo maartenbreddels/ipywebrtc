@@ -1,0 +1,151 @@
+name: Tests
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.9]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: ipywebrtc-dev
+        environment-file: dev_environment.yml
+        python-version: ${{ matrix.python-version }}
+        mamba-version: "*"
+        auto-activate-base: false
+        channels: conda-forge
+
+    - name: Workaround pytest issue
+      run: pip install pytest_tornasync
+
+    # - name: Test flake8
+    #   run: flake8 ipywebrtc --ignore=E501
+
+    - name: Install ipywebrtc
+      run: pip install .
+
+    - name: Check installation files
+      run: |
+        test -d $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc
+        test -f $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc/extension.js
+        test -f $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc/index.js
+        test -d $CONDA_PREFIX/share/jupyter/labextensions/ipywebrtc
+        test -f $CONDA_PREFIX/share/jupyter/labextensions/ipywebrtc/package.json
+    - name: Check nbextension and labextension
+      run: |
+        jupyter nbextension list 2>&1 | grep -ie "ipywebrtc/extension.*enabled" -
+        jupyter labextension list 2>&1 | grep -ie "ipywebrtc.*enabled.*ok" -
+    - name: Run Python tests
+      run: pytest tests
+  
+    - name: Run js tests
+      run: npm run --prefix js install-test
+
+    - name: Build docs (Only on MacOS for build speed)
+      if: matrix.os == 'macos-latest'
+      run: |
+        mamba install sphinx sphinx_rtd_theme pygments==2.6.1 jupyter-sphinx meshpy pyvista
+        cd docs/source/
+        sphinx-build . _build/html
+        cd ../..
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: ipywebrtc-dev
+        environment-file: dev_environment.yml
+        python-version: ${{ matrix.python-version }}
+        mamba-version: "*"
+        auto-activate-base: false
+        channels: conda-forge
+
+    - name: Build packages
+      run: |
+        python setup.py sdist bdist_wheel
+        cd dist
+        sha256sum * | tee SHA256SUMS
+    - name: Upload builds
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist ${{ github.run_number }}
+        path: ./dist
+
+  install:
+    runs-on: ${{ matrix.os }}-latest
+    needs: [build]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, macos, windows]
+        python: ['3.6', '3.9']
+        include:
+          - python: '3.6'
+            dist: 'ipywebrtc*.tar.gz'
+          - python: '3.9'
+            dist: 'ipywebrtc*.whl'
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ipywebrtc-dev
+          environment-file: dev_environment.yml
+          python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          auto-activate-base: false
+          channels: conda-forge
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: dist ${{ github.run_number }}
+          path: ./dist
+
+      - name: Install the package
+        run: |
+          cd dist
+          pip install -vv ${{ matrix.dist }}
+      # - name: Test installation files
+      #   run: |
+      #     test -d $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc
+      #     test -f $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc/extension.js
+      #     test -f $CONDA_PREFIX/share/jupyter/nbextensions/ipywebrtc/index.js
+      #     test -d $CONDA_PREFIX/share/jupyter/labextensions/ipywebrtc
+      #     test -f $CONDA_PREFIX/share/jupyter/labextensions/ipywebrtc/package.json
+      #     test -d $CONDA_PREFIX/share/jupyter/labextensions/ipywebrtc/static
+      # - name: Validate the nbextension
+      #   run: jupyter nbextension list 2>&1 | grep "ipywebrtc/extension"
+
+      # - name: Validate the labextension
+      #   run: jupyter labextension list 2>&1 | grep ipywebrtc

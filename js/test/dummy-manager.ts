@@ -64,6 +64,7 @@ class DummyManager extends base.ManagerBase<HTMLElement> {
         this.library = library;
     }
 
+    // @ts-ignore
     display_view(msg: services.KernelMessage.IMessage, view: Backbone.View<Backbone.Model>, options: any) {
         // TODO: make this a spy
         // TODO: return an html element

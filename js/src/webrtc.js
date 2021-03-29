@@ -115,12 +115,12 @@ export class ImageStreamModel extends MediaStreamModel {
         this.sync_image();
         return this.canvas.captureStream();
     }
-
-    static serializers = {
-        ...MediaStreamModel.serializers,
-        image: { deserialize: widgets.unpack_models },
-    };
 }
+
+ImageStreamModel.serializers = {
+    ...MediaStreamModel.serializers,
+    image: { deserialize: widgets.unpack_models },
+};
 
 class StreamModel extends MediaStreamModel {
     defaults() {
@@ -196,12 +196,12 @@ export class VideoStreamModel extends StreamModel {
 
         this.type = 'video';
     }
-
-    static serializers = {
-        ...StreamModel.serializers,
-        video: { deserialize: widgets.unpack_models }
-    };
 }
+
+VideoStreamModel.serializers = {
+    ...StreamModel.serializers,
+    video: { deserialize: widgets.unpack_models }
+};
 
 export class AudioStreamModel extends StreamModel {
     defaults() {
@@ -218,12 +218,12 @@ export class AudioStreamModel extends StreamModel {
 
         this.type = 'audio';
     }
-
-    static serializers = {
-        ...StreamModel.serializers,
-        audio: { deserialize: widgets.unpack_models },
-    };
 }
+
+AudioStreamModel.serializers = {
+    ...StreamModel.serializers,
+    audio: { deserialize: widgets.unpack_models },
+};
 
 export class AudioStreamView extends widgets.DOMWidgetView {
     render() {
@@ -400,11 +400,12 @@ export class WidgetStreamModel extends MediaStreamModel {
         }
     }
 
-    static serializers = {
-        ...MediaStreamModel.serializers,
-        widget: { deserialize: widgets.unpack_models },
-    };
 }
+
+WidgetStreamModel.serializers = {
+    ...MediaStreamModel.serializers,
+    widget: { deserialize: widgets.unpack_models },
+};
 
 export class WidgetStreamView extends MediaStreamView {
 }
@@ -557,11 +558,12 @@ class RecorderModel extends widgets.DOMWidgetModel {
         return super.close.apply(this, arguments);
     }
 
-    static serializers = {
-        ...widgets.DOMWidgetModel.serializers,
-        stream: { deserialize: widgets.unpack_models },
-    };
 }
+
+RecorderModel.serializers = {
+    ...widgets.DOMWidgetModel.serializers,
+    stream: { deserialize: widgets.unpack_models },
+};
 
 class RecorderView extends widgets.DOMWidgetView {
     render() {
@@ -689,11 +691,12 @@ export class ImageRecorderModel extends RecorderModel {
         utils.downloadBlob(this._last_blob, filename);
     }
 
-    static serializers = {
-        ...RecorderModel.serializers,
-        image: { deserialize: widgets.unpack_models },
-    };
 }
+
+ImageRecorderModel.serializers = {
+    ...RecorderModel.serializers,
+    image: { deserialize: widgets.unpack_models },
+};
 
 export class ImageRecorderView extends RecorderView {
     initialize() {
@@ -718,12 +721,12 @@ export class VideoRecorderModel extends RecorderModel {
 
         this.type = 'video';
     }
-
-    static serializers = {
-        ...RecorderModel.serializers,
-        video: { deserialize: widgets.unpack_models },
-    };
 }
+
+VideoRecorderModel.serializers = {
+    ...RecorderModel.serializers,
+    video: { deserialize: widgets.unpack_models },
+};
 
 export class VideoRecorderView extends RecorderView {
     initialize() {
@@ -748,12 +751,12 @@ export class AudioRecorderModel extends RecorderModel {
 
         this.type = 'audio';
     }
-
-    static serializers = {
-        ...RecorderModel.serializers,
-        audio: { deserialize: widgets.unpack_models },
-    };
 }
+
+AudioRecorderModel.serializers = {
+    ...RecorderModel.serializers,
+    audio: { deserialize: widgets.unpack_models },
+};
 
 export class AudioRecorderView extends RecorderView {
     initialize() {
@@ -905,13 +908,13 @@ export class WebRTCRoomModel extends widgets.DOMWidgetModel {
             console.error('expected a to room_id to be present');
         }
     }
-
-    static serializers = {
-        ...widgets.DOMWidgetModel.serializers,
-        stream: { deserialize: widgets.unpack_models },
-        peers: { deserialize: widgets.unpack_models },
-    };
 }
+
+WebRTCRoomModel.serializers = {
+    ...widgets.DOMWidgetModel.serializers,
+    stream: { deserialize: widgets.unpack_models },
+    peers: { deserialize: widgets.unpack_models },
+};
 
 const global_rooms = {};
 
@@ -1172,13 +1175,13 @@ export class WebRTCPeerModel extends widgets.DOMWidgetModel {
     broadcast(msg) {
         this.peer_msg_send(msg);
     }
-
-    static serializers = {
-        ...widgets.DOMWidgetModel.serializers,
-        stream: { deserialize: widgets.unpack_models },
-        peers: { deserialize: widgets.unpack_models },
-    };
 }
+
+WebRTCPeerModel.serializers = {
+    ...widgets.DOMWidgetModel.serializers,
+    stream: { deserialize: widgets.unpack_models },
+    peers: { deserialize: widgets.unpack_models },
+};
 
 export class WebRTCPeerView extends widgets.DOMWidgetView {
 

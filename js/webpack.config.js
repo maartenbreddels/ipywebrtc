@@ -1,5 +1,5 @@
 var version = require('./package.json').version;
-
+var webpack = require('webpack');
 // // Custom webpack loaders are generally the same for all webpack bundles, hence
 // // stored in a separate local variable.
 // var loaders = [
@@ -10,32 +10,46 @@ const path = require('path');
 
 var rules = [
     // { test: /\.json$/, use: "json-loader" },
-    {test: /\.js$/,  use: [{loader: "ts-loader", options: {transpileOnly: true} }]}
 ];
-var externals = ['@jupyter-widgets/base', '@jupyter-widgets/controls', 'jupyter-js-widgets']
-var pyname = 'ipywebrtc'
+var externals = ['@jupyter-widgets/base', '@jupyter-widgets/controls', 'jupyter-js-widgets'];
+var plugin_name = 'jupyter-webrtc';
 
 var resolve =  {
-    extensions: ['.ts', '.js']
+    extensions: ['.js'],
+    fallback: {
+        util: require.resolve("util/"),
+        url: require.resolve("url/"),
+        process: require.resolve("process/")
+    }
 };
+
+var plugins =  [
+    new webpack.ProvidePlugin({
+           process: 'process/browser',
+           Buffer: ['buffer', 'Buffer'],
+    }),
+];
 
 module.exports = [
     {
         entry: './src/extension.js',
         output: {
             filename: 'extension.js',
-            path: path.resolve(__dirname, `../${pyname}/static`),
-            libraryTarget: 'amd'
+            path: path.resolve(__dirname, `../share/jupyter/nbextensions/${plugin_name}`),
+            libraryTarget: 'amd',
+            publicPath: ''
         },
         mode: 'development',
-        resolve: resolve
+        resolve: resolve,
+        plugins: plugins
     },
     {
         entry: './src/index.js',
         output: {
             filename: 'index.js',
-            path: path.resolve(__dirname, `../${pyname}/static`),
-            libraryTarget: 'amd'
+            path: path.resolve(__dirname, `../share/jupyter/nbextensions/${plugin_name}`),
+            libraryTarget: 'amd',
+            publicPath: ''
         },
         devtool: 'source-map',
         module: {
@@ -43,7 +57,8 @@ module.exports = [
         },
         externals: externals,
         mode: 'development',
-        resolve: resolve
+        resolve: resolve,
+        plugins: plugins
     },
     {// Embeddable jupyter-webrtc bundle
         entry: './src/embed.js',
@@ -59,6 +74,7 @@ module.exports = [
         },
         externals: externals,
         mode: 'development',
-        resolve: resolve
+        resolve: resolve,
+        plugins: plugins
     }
 ];

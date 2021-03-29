@@ -7,13 +7,13 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2015",
-    "outDir": "lib",
+    "outDir": "test_js",
     "skipLibCheck": true,
     "sourceMap": true,
     "allowJs": true
   },
   "include": [
-        "./src/**/*"
+        "./test/*"
    ],
    "exclude": [
         "node_modules",

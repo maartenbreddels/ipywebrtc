@@ -1,6 +1,6 @@
 import {assert, expect} from 'chai';
 import {DummyManager} from './dummy-manager';
-import * as jupyter_webrtc from '..';
+import * as jupyter_webrtc from '../src';
 import {create_model, create_model_webrtc, create_view, create_image_stream} from './widget-utils'
 
 // declare function require(string): string;
@@ -22,7 +22,7 @@ describe("image recorder >", () => {
         let view = await this.manager.create_view(imageRecorder);
         await imageRecorder.snapshot()
         // console.log(imageRecorder.get('data'))
-        // let bytes = 
+        // let bytes =
         // expect()
         // view.recordButton.click()
         // why does this not compile?

@@ -1,5 +1,3 @@
-recursive-include ipywebrtc/static *.*
 include LICENSE
-include README.rst
-include README.md
-include ipywebrtc.json
+# include only by default in setuptools 43.0.0+
+include pyproject.toml

@@ -1,20 +1,14 @@
 from __future__ import absolute_import
 import os
 import logging
-try:
-    from urllib import urlopen  # py2
-except ImportError:
-    from urllib.request import urlopen  # py3
+from urllib.request import urlopen
 from traitlets import (
     observe,
-    Bool, Bytes, Dict, Instance, Int, List, TraitError, Unicode, validate,
-    Undefined
+    Bool, Dict, Instance, Int, List, TraitError, Unicode, validate
 )
 from ipywidgets import DOMWidget, Image, Video, Audio, register, widget_serialization
-from ipython_genutils.py3compat import string_types
 import ipywebrtc._version
 import traitlets
-import ipywidgets as widgets
 
 logger = logging.getLogger("jupyter-webrtc")
 semver_range_frontend = "~" + ipywebrtc._version.__version_js__
@@ -49,6 +43,7 @@ class MediaStream(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
+
 # for backwards compatibility with ipyvolume
 HasStream = MediaStream
 
@@ -60,11 +55,13 @@ class WidgetStream(MediaStream):
     _model_name = Unicode('WidgetStreamModel').tag(sync=True)
     _view_name = Unicode('WidgetStreamView').tag(sync=True)
 
-    widget = Instance(DOMWidget, allow_none=False, help='An instance of ipywidgets.DOMWidget that will be the source of the MediaStream.')\
-                .tag(sync=True, **widget_serialization)
-    max_fps = Int(None, allow_none=True,
-                help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the value is None.")\
-                .tag(sync=True)
+    widget = Instance(
+        DOMWidget, allow_none=False, help='An instance of ipywidgets.DOMWidget that will be the source of the MediaStream.'
+    ).tag(sync=True, **widget_serialization)
+    max_fps = Int(
+        None, allow_none=True,
+        help="(int, default None) The maximum amount of frames per second to capture, or only on new data when the valeus is None."
+    ).tag(sync=True)
     _html2canvas_start_streaming = Bool(False).tag(sync=True)
 
     @validate('max_fps')
@@ -276,7 +273,7 @@ class CameraStream(MediaStream):
     constraints = Dict(
         {'audio': True, 'video': True},
         help='Constraints for the camera, see https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia for details.'
-        ).tag(sync=True)
+    ).tag(sync=True)
 
     @classmethod
     def facing_user(cls, audio=True, **kwargs):
@@ -322,8 +319,9 @@ class Recorder(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream = Instance(MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source for recording.")\
-                .tag(sync=True, **widget_serialization)
+    stream = Instance(
+        MediaStream, allow_none=True, help="An instance of :class:`MediaStream` that is the source for recording."
+    ).tag(sync=True, **widget_serialization)
     filename = Unicode('record', help='The filename used for downloading or auto saving.').tag(sync=True)
     format = Unicode('webm', help='The format of the recording.').tag(sync=True)
     recording = Bool(False, help='(boolean) Indicator and controller of the recorder state, i.e. putting the value to True will start recording.').tag(sync=True)
@@ -565,6 +563,7 @@ class WebRTCRoomMqtt(WebRTCRoom):
     _model_name = Unicode('WebRTCRoomMqttModel').tag(sync=True)
 
     server = Unicode('wss://iot.eclipse.org:443/ws').tag(sync=True)
+
 
 # add all help strings to the __doc__ for the api docstrings
 for name, cls in list(vars().items()):

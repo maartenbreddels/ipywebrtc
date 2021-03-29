@@ -1,6 +1,6 @@
 {
   "name": "jupyter-webrtc",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "WebRTC for Jupyter notebook/lab",
   "author": "Maarten Breddels",
   "main": "src/index.js",

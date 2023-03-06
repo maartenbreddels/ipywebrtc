@@ -1,0 +1,8 @@
+# for mybinder
+ipyleaflet
+pythreejs
+scikit-image
+pillow
+notebook
+ipywidgets
+ipywebrtc

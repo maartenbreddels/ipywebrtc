@@ -26,10 +26,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        activate-environment: ipywebrtc-dev
+        environment-name: ipywebrtc-dev
         environment-file: dev_environment.yml
         python-version: ${{ matrix.python-version }}
         mamba-version: "*"
@@ -75,10 +75,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Setup conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install Conda environment with Micromamba
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        activate-environment: ipywebrtc-dev
+        environment-name: ipywebrtc-dev
         environment-file: dev_environment.yml
         python-version: ${{ matrix.python-version }}
         mamba-version: "*"
@@ -116,10 +116,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: ipywebrtc-dev
+          environment-name: ipywebrtc-dev
           environment-file: dev_environment.yml
           python-version: ${{ matrix.python-version }}
           mamba-version: "*"

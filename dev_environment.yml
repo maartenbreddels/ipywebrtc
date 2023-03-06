@@ -3,9 +3,11 @@ channels:
     - conda-forge
 dependencies:
     - pip
+    - nodejs=14.*
     - yarn
     - jupyter-packaging
     - jupyterlab=3
+    - notebook
     - ipywidgets>=7.6
     - flake8
     - nbsphinx

@@ -168,4 +168,4 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-nbsphinx_allow_errors = True
+# nbsphinx_allow_errors = True

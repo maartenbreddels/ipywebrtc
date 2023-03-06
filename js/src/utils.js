@@ -35,6 +35,7 @@ async function onCanPlay(videoElement) {
             resolve();
         } else {
             videoElement.addEventListener('canplay', resolve);
+            videoElement.addEventListener('error', (event) => reject(new Error("cannot play video stream")));
         }
     });
 }

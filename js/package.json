@@ -31,6 +31,7 @@
     "build:nbextension": "webpack --mode=production",
     "watch": "npm-run-all -p watch:*",
     "watch:nbextension": "webpack --watch --mode=development",
+    "watch:labextension": "jupyter labextension watch .",
     "test": "tsc && copyfiles package.json test_js && karma start --single-run"
   },
   "devDependencies": {

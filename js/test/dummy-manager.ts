@@ -53,7 +53,6 @@ export class MockComm {
   _on_close: Function = null;
 }
 
-//@ts-ignore
 export class DummyManager extends base.ManagerBase<HTMLElement> {
   constructor(library: any) {
     super();
@@ -62,7 +61,6 @@ export class DummyManager extends base.ManagerBase<HTMLElement> {
     this.library = library;
   }
 
-  // @ts-ignore
   display_view(
     msg: services.KernelMessage.IMessage,
     view: Backbone.View<Backbone.Model>,

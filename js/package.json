@@ -26,7 +26,7 @@
     "ipywidgets"
   ],
   "scripts": {
-    "build": "npm run build:labextension && npm run build:nbextension",
+    "build": "yarn build:labextension && yarn build:nbextension",
     "build:labextension": "jupyter labextension build .",
     "build:nbextension": "webpack --mode=production",
     "watch": "npm-run-all -p watch:*",
@@ -35,9 +35,9 @@
     "test": "tsc && copyfiles package.json test_js && karma start --single-run"
   },
   "devDependencies": {
-    "@jupyter-widgets/controls": "^1.5.0 || ^2 || ^3",
-    "@jupyterlab/builder": "^3.0.1",
-    "@jupyterlab/services": "^2.0.3",
+    "@jupyter-widgets/controls": "^2 || ^3",
+    "@jupyterlab/builder": "^4.0.0",
+    "@jupyterlab/services": "^7.0.10",
     "@types/chai": "^4.1.4",
     "@types/expect.js": "^0.3.29",
     "@types/mocha": "^7.0.2",
@@ -62,12 +62,12 @@
     "sinon-chai": "^3.3.0",
     "style-loader": "^0.13.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.5.2",
+    "typescript": "^5.3.3",
     "webpack": "^5",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
-    "@jupyter-widgets/base": "*",
+    "@jupyter-widgets/base": "^1.5.0 || ^2 || ^3",
     "buffer": "^4.9.2",
     "html2canvas": "v1.0.0-alpha.12",
     "mqtt": "^2.11.0",

@@ -12,3 +12,5 @@ share
 
 # OS X
 .DS_Store
+
+.yarn/

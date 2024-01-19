@@ -5,5 +5,5 @@
 // already be loaded by the notebook otherwise.
 
 // Export widget models and views, and the npm package version number.
-module.exports = require('./webrtc.js');
-module.exports['version'] = require('../package.json').version;
+module.exports = require("./webrtc.js");
+module.exports["version"] = require("../package.json").version;

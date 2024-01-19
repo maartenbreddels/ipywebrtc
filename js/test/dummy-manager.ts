@@ -3,11 +3,10 @@
 
 
 //import * as widgets from '../../lib';
+import * as base from '@jupyter-widgets/base';
+import * as widgets from '@jupyter-widgets/controls';
 import * as services from '@jupyterlab/services';
 import * as Backbone from 'backbone';
-import * as widgets from '@jupyter-widgets/controls';
-import * as base from '@jupyter-widgets/base';
-import * as sinon from 'sinon';
 
 let numComms = 0;
 

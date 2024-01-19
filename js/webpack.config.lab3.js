@@ -1,12 +1,12 @@
-var path = require('path');
-var webpack = require('webpack');
+var path = require("path");
+var webpack = require("webpack");
 
-var plugins =  [
-    new webpack.ProvidePlugin({
-           Buffer: ['buffer', 'Buffer'],
-    }),
+var plugins = [
+  new webpack.ProvidePlugin({
+    Buffer: ["buffer", "Buffer"],
+  }),
 ];
 
 module.exports = {
-    plugins: plugins,
-}
+  plugins: plugins,
+};

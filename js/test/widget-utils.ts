@@ -1,50 +1,83 @@
 // some helper functions to quickly create widgets
 
-export
-async function create_model_webrtc(manager, name: string, id: string, args = {}) {
-    return create_model(manager, 'jupyter-webrtc', `${name}Model`, name, id, args);
+export async function create_model_webrtc(
+  manager,
+  name: string,
+  id: string,
+  args = {}
+) {
+  return create_model(
+    manager,
+    "jupyter-webrtc",
+    `${name}Model`,
+    name,
+    id,
+    args
+  );
 }
 
-export
-async function create_model(manager, module: string, model: string, view: string, id: string, args = {}) {
-    let model_widget = await manager.new_widget({
-            model_module: module,
-            model_name: model,
-            model_module_version : '*',
-            view_module: module,
-            view_name: view,
-            view_module_version: '*',
-            model_id: id,
-    }, args );
-    return model_widget;
-
+export async function create_model(
+  manager,
+  module: string,
+  model: string,
+  view: string,
+  id: string,
+  args = {}
+) {
+  let model_widget = await manager.new_widget(
+    {
+      model_module: module,
+      model_name: model,
+      model_module_version: "*",
+      view_module: module,
+      view_name: view,
+      view_module_version: "*",
+      model_id: id,
+    },
+    args
+  );
+  return model_widget;
 }
 
-export
-async function create_view(manager, model, options = {}) {
-    let view = await manager.create_view(model, options);
-    return view;
+export async function create_view(manager, model, options = {}) {
+  let view = await manager.create_view(model, options);
+  return view;
 }
 
 declare function require(string): string;
 
-export
-async function create_video_stream(manager, id: string, options = {}) {
-    let video_data: any = require('arraybuffer-loader!../../../docs/source/Big.Buck.Bunny.mp4')
-    // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: {buffer: new DataView((new Uint8Array(video_data)).buffer)}, format: 'mp4'});
-    // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: new Uint8Array(video_data), format: 'mp4'});
-    let videoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: new DataView((new Uint8Array(video_data)).buffer), format: 'mp4'});
-    return await create_model_webrtc(manager, 'VideoStream', 'vs1', {video: `IPY_MODEL_${id}`});
+export async function create_video_stream(manager, id: string, options = {}) {
+  let video_data: any = require("arraybuffer-loader!../../../docs/source/Big.Buck.Bunny.mp4");
+  // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: {buffer: new DataView((new Uint8Array(video_data)).buffer)}, format: 'mp4'});
+  // let ivideoModel = await create_model(manager, '@jupyter-widgets/controls', 'VideoModel', 'VideoView', id, {value: new Uint8Array(video_data), format: 'mp4'});
+  let videoModel = await create_model(
+    manager,
+    "@jupyter-widgets/controls",
+    "VideoModel",
+    "VideoView",
+    id,
+    { value: new DataView(new Uint8Array(video_data).buffer), format: "mp4" }
+  );
+  return await create_model_webrtc(manager, "VideoStream", "vs1", {
+    video: `IPY_MODEL_${id}`,
+  });
 }
 
+let image_data: any = require("arraybuffer-loader!../../test/jupyter.jpg");
+export { image_data };
 
-let image_data: any = require('arraybuffer-loader!../../test/jupyter.jpg')
-export {image_data};
-
-export
-async function create_image_stream(manager, id: string, options = {}) {
-    let imageModel = await create_model(manager, '@jupyter-widgets/controls', 'ImageModel', 'imageView', `im_${id}`, {value: new DataView((new Uint8Array(image_data)).buffer), format: 'png'});
-    return await create_model_webrtc(manager, 'ImageStream', id, {image: `IPY_MODEL_im_${id}`});
+export async function create_image_stream(manager, id: string, options = {}) {
+  let imageModel = await create_model(
+    manager,
+    "@jupyter-widgets/controls",
+    "ImageModel",
+    "imageView",
+    `im_${id}`,
+    { value: new DataView(new Uint8Array(image_data).buffer), format: "png" }
+  );
+  return await create_model_webrtc(manager, "ImageStream", id, {
+    image: `IPY_MODEL_im_${id}`,
+  });
 }
 
 /*

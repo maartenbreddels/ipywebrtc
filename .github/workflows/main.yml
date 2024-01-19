@@ -50,7 +50,6 @@ jobs:
 
       - name: Check nbextension and labextension
         run: |
-          jupyter nbextension list 2>&1 | grep -ie "jupyter-webrtc/extension.*enabled" -
           jupyter labextension list 2>&1 | grep -ie "jupyter-webrtc.*enabled.*ok" -
 
       - name: Run js tests
@@ -136,9 +135,6 @@ jobs:
           test -d $CONDA_PREFIX/share/jupyter/labextensions/jupyter-webrtc
           test -f $CONDA_PREFIX/share/jupyter/labextensions/jupyter-webrtc/package.json
           test -d $CONDA_PREFIX/share/jupyter/labextensions/jupyter-webrtc/static
-
-      - name: Validate the nbextension
-        run: jupyter nbextension list 2>&1 | grep "jupyter-webrtc/extension"
 
       - name: Validate the labextension
         run: jupyter labextension list 2>&1 | grep jupyter-webrtc

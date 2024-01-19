@@ -26,7 +26,7 @@
     "ipywidgets"
   ],
   "scripts": {
-    "build": "npm run build:labextension && npm run build:nbextension",
+    "build": "yarn build:labextension && yarn build:nbextension",
     "build:labextension": "jupyter labextension build .",
     "build:nbextension": "webpack --mode=production",
     "watch": "npm-run-all -p watch:*",

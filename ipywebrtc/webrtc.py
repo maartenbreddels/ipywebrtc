@@ -30,7 +30,7 @@ class MediaStream(DOMWidget):
 
     See https://developer.mozilla.org/nl/docs/Web/API/MediaStream for details
     In practice this can a stream coming from an HTMLVideoElement,
-    HTMLCanvasElement (could be a WebGL canvas) or a camera/webcam/microphWone
+    HTMLCanvasElement (could be a WebGL canvas) or a camera/webcam/microphone
     using getUserMedia.
 
     The currently supported MediaStream (subclasses) are:

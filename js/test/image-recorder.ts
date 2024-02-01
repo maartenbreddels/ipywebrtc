@@ -23,14 +23,14 @@ describe("image recorder >", () => {
       "@jupyter-widgets/controls",
       "ImageModel",
       "imageView",
-      `image1`
+      `image1`,
     );
     let image = await create_image_stream(this.manager, "is1");
     let imageRecorder = await create_model_webrtc(
       this.manager,
       "ImageRecorder",
       "mir1",
-      { stream: "IPY_MODEL_is1", image: "IPY_MODEL_image1" }
+      { stream: "IPY_MODEL_is1", image: "IPY_MODEL_image1" },
     );
     let view = await this.manager.create_view(imageRecorder);
     await imageRecorder.snapshot();

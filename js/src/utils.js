@@ -20,7 +20,7 @@ export function download(data, filename) {
       false,
       false,
       0,
-      null
+      null,
     );
 
     a.dispatchEvent(e);
@@ -46,7 +46,7 @@ export async function onCanPlay(videoElement) {
     } else {
       videoElement.addEventListener("canplay", resolve);
       videoElement.addEventListener("error", (event) =>
-        reject(new Error("cannot play video stream"))
+        reject(new Error("cannot play video stream")),
       );
     }
   });

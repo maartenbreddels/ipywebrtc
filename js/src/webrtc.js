@@ -65,7 +65,7 @@ export class MediaStreamView extends widgets.DOMWidgetView {
         text.innerHTML =
           "Error creating view for mediastream: " + error.message;
         this.el.appendChild(text);
-      }
+      },
     );
   }
 
@@ -250,7 +250,7 @@ export class AudioStreamView extends widgets.DOMWidgetView {
         text.innerHTML =
           "Error creating view for mediastream: " + error.message;
         this.el.appendChild(text);
-      }
+      },
     );
   }
 
@@ -281,7 +281,7 @@ export class WidgetStreamModel extends MediaStreamModel {
     this.on(
       "change:_html2canvas_start_streaming",
       this.updateHTML2CanvasStreaming,
-      this
+      this,
     );
     this.rendered_view = null;
 
@@ -314,7 +314,7 @@ export class WidgetStreamModel extends MediaStreamModel {
 
           // If the widget view is a canvas or a video element
           const capturable_obj = this.find_capturable_obj(
-            this.rendered_view.el
+            this.rendered_view.el,
           );
           if (capturable_obj) {
             return this._captureStream(capturable_obj);
@@ -445,7 +445,7 @@ export class CameraStreamModel extends MediaStreamModel {
   captureStream() {
     if (!this.cameraStream) {
       this.cameraStream = navigator.mediaDevices.getUserMedia(
-        this.get("constraints")
+        this.get("constraints"),
       );
     }
     return this.cameraStream;
@@ -515,7 +515,7 @@ class RecorderModel extends widgets.DOMWidgetModel {
     const mimeType = this.mimeType;
     if (!MediaRecorder.isTypeSupported(mimeType)) {
       throw new Error(
-        `The mimeType ${mimeType} is not supported for record on this browser`
+        `The mimeType ${mimeType} is not supported for record on this browser`,
       );
     }
 
@@ -855,7 +855,7 @@ export class WebRTCRoomModel extends widgets.DOMWidgetModel {
           stream_local: this.get("stream"),
           id_local: this.get("room_id"),
           id_remote: from_id,
-        }
+        },
       )
       .then((peer) => {
         peer.peer_msg_send = (msg) => {
@@ -879,7 +879,7 @@ export class WebRTCRoomModel extends widgets.DOMWidgetModel {
         streams.push(stream);
         this.set("streams", streams);
         this.save_changes();
-      })
+      }),
     );
     peer.on("change:connected", () => {
       const connected = peer.get("connected");
@@ -887,7 +887,7 @@ export class WebRTCRoomModel extends widgets.DOMWidgetModel {
         "changed connected status for ",
         peer.get("id_remote"),
         "to",
-        connected
+        connected,
       );
       if (!connected) {
         let streams = this.get("streams").slice();
@@ -1051,7 +1051,7 @@ export class WebRTCPeerModel extends widgets.DOMWidgetModel {
       if (!this.initiator) {
         console.log(
           this.get("id_local"),
-          "did not initiate, reply with answer"
+          "did not initiate, reply with answer",
         );
         // if we didn't initiate, we should respond with an answer
         // now we create an answer, and send a sdp back
@@ -1148,7 +1148,7 @@ export class WebRTCPeerModel extends widgets.DOMWidgetModel {
       console.log(
         this.room_id,
         "ICE connection state",
-        this.pc.iceConnectionState
+        this.pc.iceConnectionState,
       );
       if (this.pc.iceConnectionState === "disconnected") {
         this.set("connected", false);

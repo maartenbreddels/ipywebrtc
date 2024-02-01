@@ -11,7 +11,7 @@ describe("VideoStream >", () => {
     let videoModel = await create_model_webrtc(
       this.manager,
       "VideoStream",
-      "video1"
+      "video1",
     );
     try {
       await videoModel.captureStream();

@@ -201,9 +201,7 @@ class VideoStream(MediaStream):
         ext = os.path.splitext(url)[1]
         if ext:
             format = ext[1:]
-        video = Video(
-            value=urlopen(url).read(), format=format, autoplay=False, controls=False
-        )
+        video = Video(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
         return cls(video=video, **kwargs)
 
 
@@ -265,9 +263,7 @@ class AudioStream(MediaStream):
         ext = os.path.splitext(url)[1]
         if ext:
             format = ext[1:]
-        audio = Audio(
-            value=urlopen(url).read(), format=format, autoplay=False, controls=False
-        )
+        audio = Audio(value=urlopen(url).read(), format=format, autoplay=False, controls=False)
         return cls(audio=audio, **kwargs)
 
 
@@ -345,9 +341,9 @@ class Recorder(DOMWidget):
         allow_none=True,
         help="An instance of :class:`MediaStream` that is the source for recording.",
     ).tag(sync=True, **widget_serialization)
-    filename = Unicode(
-        "record", help="The filename used for downloading or auto saving."
-    ).tag(sync=True)
+    filename = Unicode("record", help="The filename used for downloading or auto saving.").tag(
+        sync=True
+    )
     format = Unicode("webm", help="The format of the recording.").tag(sync=True)
     recording = Bool(
         False,
@@ -453,9 +449,9 @@ class VideoRecorder(Recorder):
     _view_name = Unicode("VideoRecorderView").tag(sync=True)
 
     video = Instance(Video).tag(sync=True, **widget_serialization)
-    codecs = Unicode(
-        "", help='Optional codecs for the recording, e.g. "vp8" or "vp9, opus".'
-    ).tag(sync=True)
+    codecs = Unicode("", help='Optional codecs for the recording, e.g. "vp8" or "vp9, opus".').tag(
+        sync=True
+    )
 
     def __init__(
         self,
@@ -526,9 +522,7 @@ class AudioRecorder(Recorder):
     _view_name = Unicode("AudioRecorderView").tag(sync=True)
 
     audio = Instance(Audio).tag(sync=True, **widget_serialization)
-    codecs = Unicode("", help='Optional codecs for the recording, e.g. "opus".').tag(
-        sync=True
-    )
+    codecs = Unicode("", help='Optional codecs for the recording, e.g. "opus".').tag(sync=True)
 
     def __init__(
         self,
@@ -597,12 +591,8 @@ class WebRTCPeer(DOMWidget):
     _view_module_version = Unicode(semver_range_frontend).tag(sync=True)
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
-    stream_local = Instance(MediaStream, allow_none=True).tag(
-        sync=True, **widget_serialization
-    )
-    stream_remote = Instance(MediaStream, allow_none=True).tag(
-        sync=True, **widget_serialization
-    )
+    stream_local = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
+    stream_remote = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     id_local = Unicode("").tag(sync=True)
     id_remote = Unicode("").tag(sync=True)
     connected = Bool(False, read_only=True).tag(sync=True)
@@ -623,14 +613,10 @@ class WebRTCRoom(DOMWidget):
     _model_module_version = Unicode(semver_range_frontend).tag(sync=True)
 
     room = Unicode("room").tag(sync=True)
-    stream = Instance(MediaStream, allow_none=True).tag(
-        sync=True, **widget_serialization
-    )
+    stream = Instance(MediaStream, allow_none=True).tag(sync=True, **widget_serialization)
     room_id = Unicode(read_only=True).tag(sync=True)
     nickname = Unicode("anonymous").tag(sync=True)
-    peers = List(Instance(WebRTCPeer), [], allow_none=False).tag(
-        sync=True, **widget_serialization
-    )
+    peers = List(Instance(WebRTCPeer), [], allow_none=False).tag(sync=True, **widget_serialization)
     streams = List(Instance(MediaStream), [], allow_none=False).tag(
         sync=True, **widget_serialization
     )

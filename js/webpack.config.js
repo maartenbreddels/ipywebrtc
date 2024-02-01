@@ -41,7 +41,7 @@ module.exports = [
       filename: "extension.js",
       path: path.resolve(
         __dirname,
-        `../share/jupyter/nbextensions/${plugin_name}`
+        `../share/jupyter/nbextensions/${plugin_name}`,
       ),
       libraryTarget: "amd",
       publicPath: "",
@@ -56,7 +56,7 @@ module.exports = [
       filename: "index.js",
       path: path.resolve(
         __dirname,
-        `../share/jupyter/nbextensions/${plugin_name}`
+        `../share/jupyter/nbextensions/${plugin_name}`,
       ),
       libraryTarget: "amd",
       publicPath: "",

@@ -9,17 +9,13 @@ gitpush = ReleaseTargetGitPush()
 filenames_python = glob.glob("*")
 filenames_python.remove("js")
 # filenames_python.remove('notebooks')
-package_python = add_package(
-    ".", "py", distribution_name="ipywebrtc", filenames=filenames_python
-)
+package_python = add_package(".", "py", distribution_name="ipywebrtc", filenames=filenames_python)
 
 version_python = VersionSource(package_python, "{path}/ipywebrtc/_version.py")
 gittag = ReleaseTargetGitTagVersion(version_source=version_python)
 
 package_python.version_source = version_python
-package_python.version_targets.append(
-    VersionTarget(package_python, "{path}/ipywebrtc/_version.py")
-)
+package_python.version_targets.append(VersionTarget(package_python, "{path}/ipywebrtc/_version.py"))
 
 package_python.release_targets.append(gittag)
 package_python.release_targets.append(ReleaseTargetSourceDist(package_python))

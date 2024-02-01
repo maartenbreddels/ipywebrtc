@@ -1,9 +1,9 @@
 WebRTC for Jupyter notebook/lab
 
-Package Install
----------------
+## Package Install
 
 **Prerequisites**
+
 - [node](http://nodejs.org/)
 
 ```bash

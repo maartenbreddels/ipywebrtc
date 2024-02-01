@@ -1,0 +1,24 @@
+name: code-quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          pip install ".[dev]"
+          pre-commit install
+      - name: run pre-commit
+        run: |
+          pre-commit run --all-files

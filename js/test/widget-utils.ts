@@ -4,7 +4,7 @@ export async function create_model_webrtc(
   manager,
   name: string,
   id: string,
-  args = {}
+  args = {},
 ) {
   return create_model(
     manager,
@@ -12,7 +12,7 @@ export async function create_model_webrtc(
     `${name}Model`,
     name,
     id,
-    args
+    args,
   );
 }
 
@@ -22,7 +22,7 @@ export async function create_model(
   model: string,
   view: string,
   id: string,
-  args = {}
+  args = {},
 ) {
   let model_widget = await manager.new_widget(
     {
@@ -34,7 +34,7 @@ export async function create_model(
       view_module_version: "*",
       model_id: id,
     },
-    args
+    args,
   );
   return model_widget;
 }
@@ -56,7 +56,7 @@ export async function create_video_stream(manager, id: string, options = {}) {
     "VideoModel",
     "VideoView",
     id,
-    { value: new DataView(new Uint8Array(video_data).buffer), format: "mp4" }
+    { value: new DataView(new Uint8Array(video_data).buffer), format: "mp4" },
   );
   return await create_model_webrtc(manager, "VideoStream", "vs1", {
     video: `IPY_MODEL_${id}`,
@@ -73,7 +73,7 @@ export async function create_image_stream(manager, id: string, options = {}) {
     "ImageModel",
     "imageView",
     `im_${id}`,
-    { value: new DataView(new Uint8Array(image_data).buffer), format: "png" }
+    { value: new DataView(new Uint8Array(image_data).buffer), format: "png" },
   );
   return await create_model_webrtc(manager, "ImageStream", id, {
     image: `IPY_MODEL_im_${id}`,

@@ -9,9 +9,10 @@ dependencies:
   - jupyterlab=3
   - notebook
   - ipywidgets>=7.6
-  - flake8
+  - ruff
   - nbsphinx
   - sphinx
   - sphinx_rtd_theme
   - pygments==2.6.1
   - jupyter-sphinx
+  - precommit

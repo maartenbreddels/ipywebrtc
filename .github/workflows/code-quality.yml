@@ -1,0 +1,35 @@
+name: code-quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-name: ipywebrtc-dev
+          environment-file: dev_environment.yml
+          python-version: ${{ matrix.python-version }}
+          mamba-version: "*"
+          auto-activate-base: false
+          channels: conda-forge
+
+      - name: Install dependencies
+        run: |
+          pip install ".[dev]"
+          pre-commit install
+      - name: run pre-commit
+        run: |
+          pre-commit run --all-files

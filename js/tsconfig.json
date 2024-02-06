@@ -1,5 +1,5 @@
 {
-"compilerOptions": {
+  "compilerOptions": {
     // "noImplicitAny": true,
     "lib": ["dom", "es5", "es2015"],
     "noEmitOnError": true,
@@ -12,11 +12,6 @@
     "sourceMap": true,
     "allowJs": true
   },
-  "include": [
-        "./test/*"
-   ],
-   "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
-   ]
+  "include": ["./test/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

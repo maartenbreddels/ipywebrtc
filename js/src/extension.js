@@ -4,16 +4,16 @@
 
 // Configure requirejs
 if (window.require) {
-    window.require.config({
-        map: {
-            '*' : {
-                'jupyter-webrtc': 'nbextensions/jupyter-webrtc/index',
-            }
-        }
-    });
+  window.require.config({
+    map: {
+      "*": {
+        "jupyter-webrtc": "nbextensions/jupyter-webrtc/index",
+      },
+    },
+  });
 }
 
 // Export the required load_ipython_extention
 module.exports = {
-    load_ipython_extension: function() {}
+  load_ipython_extension: function () {},
 };

@@ -77,6 +77,7 @@ setup(
     install_require=[
         "ipywidgets>=7.4.0",
     ],
+    extras_require={"dev": ["pre-commit"]},
     packages=find_packages(),
     zip_safe=False,
     cmdclass=cmdclass,

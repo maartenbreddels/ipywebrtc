@@ -36,9 +36,6 @@ jobs:
           auto-activate-base: false
           channels: conda-forge
 
-      - name: Test flake8
-        run: flake8 ipywebrtc --ignore=E501,F405
-
       - name: Install ipywebrtc
         run: pip install .
 

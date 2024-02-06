@@ -1,5 +1,7 @@
 var version = require("./package.json").version;
 var webpack = require("webpack");
+var crypto = require("crypto");
+
 // // Custom webpack loaders are generally the same for all webpack bundles, hence
 // // stored in a separate local variable.
 // var loaders = [
@@ -7,6 +9,11 @@ var webpack = require("webpack");
 // ];
 
 const path = require("path");
+
+// Workaround for loaders using "md4" by default, which is not supported in FIPS-compliant OpenSSL
+var cryptoOrigCreateHash = crypto.createHash;
+crypto.createHash = (algorithm) =>
+  cryptoOrigCreateHash(algorithm == "md4" ? "sha256" : algorithm);
 
 var rules = [
   // { test: /\.json$/, use: "json-loader" },

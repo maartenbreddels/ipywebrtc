@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - pip
-  - nodejs=14.*
+  - nodejs=16.*
   - yarn
   - jupyter-packaging
   - jupyterlab=3
@@ -15,4 +15,4 @@ dependencies:
   - sphinx_rtd_theme
   - pygments==2.6.1
   - jupyter-sphinx
-  - precommit
+  - pre-commit

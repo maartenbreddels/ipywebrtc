@@ -3,8 +3,21 @@ import random
 import ipywidgets as widgets
 from IPython.display import display
 
-from ._version import __version__, version_info  # noqa
-from .webrtc import CameraStream, WebRTCRoomMqtt  # noqa
+from ._version import __version__, version_info
+from .webrtc import (
+    AudioRecorder,
+    AudioStream,
+    CameraStream,
+    ImageRecorder,
+    ImageStream,
+    VideoRecorder,
+    VideoStream,
+    WebRTCPeer,
+    WebRTCRoom,
+    WebRTCRoomLocal,
+    WebRTCRoomMqtt,
+    WidgetStream,
+)
 
 
 def _prefix():

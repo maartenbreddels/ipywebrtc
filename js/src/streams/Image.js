@@ -1,5 +1,6 @@
 import { unpack_models } from "@jupyter-widgets/base";
 import * as utils from "../utils";
+import { imageWidgetToCanvas } from "../utils";
 import { MediaStreamModel } from "./Media";
 import { RecorderModel, RecorderView } from "./Recorder";
 

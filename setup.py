@@ -77,7 +77,10 @@ setup(
     install_require=[
         "ipywidgets>=7.4.0",
     ],
-    extras_require={"dev": ["pre-commit"]},
+    extras_require={
+        "dev": ["pre-commit"],
+        "test": ["solara[pytest]", "playwright", "pytest-playwright"],
+    },
     packages=find_packages(),
     zip_safe=False,
     cmdclass=cmdclass,

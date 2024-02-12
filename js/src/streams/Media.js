@@ -46,6 +46,7 @@ export class MediaStreamView extends DOMWidgetView {
     this.video.controls = true;
     this.pWidget.addClass("jupyter-widgets");
     this.pWidget.addClass("widget-image");
+    this.pWidget.addClass("video-stream");
 
     this.initPromise = this.model.captureStream();
 

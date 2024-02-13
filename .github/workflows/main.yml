@@ -58,6 +58,12 @@ jobs:
           npm run test
         working-directory: js
 
+      - name: Run pytest
+        run: |
+          pip install ".[test]"
+          playwright install chromium
+          pytest --no-solara-vuetify-warmup
+
       - name: Build docs (Only on MacOS for build speed)
         if: matrix.os == 'macos-latest'
         run: |

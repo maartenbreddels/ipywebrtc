@@ -12,3 +12,7 @@ share
 
 # OS X
 .DS_Store
+.yarn/
+.vscode 
+labextension 
+yarn.lock

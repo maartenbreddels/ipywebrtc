@@ -11,4 +11,4 @@ def test_stream(ipywidgets_runner, page_session: playwright.sync_api.Page, asser
 
     ipywidgets_runner(kernel_code)
     vid = page_session.locator(".video-stream").wait_for()
-    playwright.sync_api.expect(vid).to_be_visible()
+    playwright.sync_api.expect(vid).to_be_visible().wait_for()

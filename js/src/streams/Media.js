@@ -1,9 +1,5 @@
+import { DOMWidgetModel, DOMWidgetView } from "@jupyter-widgets/base";
 import * as _ from "underscore";
-import {
-  DOMWidgetView,
-  DOMWidgetModel,
-  unpack_models,
-} from "@jupyter-widgets/base";
 import * as utils from "../utils";
 
 const semver_range = "~" + require("../../package.json").version;
@@ -46,7 +42,7 @@ export class MediaStreamView extends DOMWidgetView {
     this.video.controls = true;
     this.pWidget.addClass("jupyter-widgets");
     this.pWidget.addClass("widget-image");
-    this.pWidget.addClass("video-stream");
+    this.video.classList.add("video-stream");
 
     this.initPromise = this.model.captureStream();
 

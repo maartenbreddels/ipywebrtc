@@ -4,7 +4,7 @@ import ipywidgets as widgets
 from IPython.display import display
 
 from ._version import __version__, version_info  # noqa
-from .webrtc import CameraStream, WebRTCRoomMqtt  # noqa
+from .webrtc import ArCube, CameraStream, WebRTCRoomMqtt  # noqa
 
 
 def _prefix():

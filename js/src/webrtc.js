@@ -1,10 +1,10 @@
+import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
 import * as widgets from "@jupyter-widgets/base";
 import * as html2canvas from "html2canvas";
-import * as _ from "underscore";
-import * as THREEx from "@ar-js-org/ar.js/three.js/build/ar-threex.js";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
+import * as _ from "underscore";
+import "../css/webrtc.css";
 // import blueBg from "../../../images/bg.jpg";
 require("webrtc-adapter");
 
@@ -1265,14 +1265,15 @@ export class WebRTCPeerView extends widgets.DOMWidgetView {
   }
 }
 
-export class MagicCubeModel extends widgets.DOMWidgetModel {
+// Based on magic cube example by Stemkoski: https://github.com/stemkoski/AR-Examples/blob/master/magic-cube.html
+export class ArCubeModel extends widgets.DOMWidgetModel {
   defaults() {
     return {
       ...super.defaults(),
       _model_module: "jupyter-webrtc",
       _view_module: "jupyter-webrtc",
-      _model_name: "MagicCubeModel",
-      _view_name: "MagicCubeView",
+      _model_name: "ArCubeModel",
+      _view_name: "ArCubeView",
       _model_module_version: semver_range,
       _view_module_version: semver_range,
       width: 640,
@@ -1285,6 +1286,7 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
       stage_color: "#11111B",
       show_edges: true,
       fps_limit: 60,
+      okToLoadModel: true,
     };
   }
 
@@ -1298,7 +1300,11 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
 
     window.addEventListener("arjs-video-loaded", (e) => {
       this.resolve();
+      e.detail.component.style.display = "none";
     });
+
+    // TODO: This feels kind of hacky?
+    this.okToLoadModel = true;
 
     this.setupThreeStuff();
     this.setupSource();
@@ -1315,7 +1321,8 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
     // TODO: Add this as a python option
     // this.scene.background = new THREE.TextureLoader().load(blueBg);
 
-    this.ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    console.log("this.ambientLight", this.ambientLight);
     this.scene.add(this.ambientLight);
 
     this.camera = new THREE.Camera();
@@ -1428,7 +1435,7 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
     console.log("scene setup");
     this.sceneGroup = new THREE.Group();
 
-    // a 1x1x1 cube model with scale factor 1.25 fills up the physical cube
+    // Scale cube model to cover physical cube
     this.sceneGroup.scale.set(1.75 / 2, 1.75 / 2, 1.75 / 2);
 
     this.buildStage();
@@ -1531,35 +1538,37 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
     }
 
     // load model
-    this.gltfLoader.load(
-      this.get("model_url"),
-      (gltf) => {
-        let scale = this.get("scale");
-        this.gltfModel = gltf.scene;
-        this.gltfModel.scale.set(scale, scale, scale);
-        this.gltfModel.position.fromArray(this.get("position"));
+    if (this.okToLoadModel) {
+      this.okToLoadModel = false;
 
-        console.log("gltf", gltf);
+      this.gltfLoader.load(
+        this.get("model_url"),
+        (gltf) => {
+          let scale = this.get("scale");
+          this.gltfModel = gltf.scene;
+          this.gltfModel.scale.set(scale, scale, scale);
+          this.gltfModel.position.fromArray(this.get("position"));
 
-        console.log("this.gltfModel", this.gltfModel);
-        this.animations = gltf.animations;
-        this.mixer = new THREE.AnimationMixer(this.gltfModel);
+          this.animations = gltf.animations;
+          this.mixer = new THREE.AnimationMixer(this.gltfModel);
 
-        if (this.animations) {
-          this.animations.forEach((clip) => {
-            this.mixer.clipAction(clip).play();
-          });
-        }
+          if (this.animations) {
+            this.animations.forEach((clip) => {
+              this.mixer.clipAction(clip).play();
+            });
+          }
 
-        this.sceneGroup.add(this.gltfModel);
-      },
-      () => {
-        console.log("model loading");
-      },
-      (error) => {
-        console.log("Error loading model", error);
-      },
-    );
+          this.sceneGroup.add(this.gltfModel);
+          this.okToLoadModel = true;
+        },
+        () => {
+          console.log("model loading");
+        },
+        (error) => {
+          console.log("Error loading model", error);
+        },
+      );
+    }
   }
 
   // TODO: Handle ImageBitMaps
@@ -1612,11 +1621,11 @@ export class MagicCubeModel extends widgets.DOMWidgetModel {
   // }
 }
 
-MagicCubeModel.serializers = {
+ArCubeModel.serializers = {
   ...widgets.DOMWidgetModel.serializers,
 };
 
-export class MagicCubeView extends widgets.DOMWidgetView {
+export class ArCubeView extends widgets.DOMWidgetView {
   async render() {
     // start time for FPS limit
     this.then = performance.now();
@@ -1637,6 +1646,7 @@ export class MagicCubeView extends widgets.DOMWidgetView {
     this.modelEvents();
 
     this.el.classList.add("ar-container");
+    this.el.style.minHeight = "480px";
 
     this.el.appendChild(this.renderer.domElement);
 
@@ -1646,6 +1656,8 @@ export class MagicCubeView extends widgets.DOMWidgetView {
     this.newWebcam.srcObject = this.existingWebcam.srcObject;
     this.newWebcam.id = `webcamView${Object.keys(this.model.views).length}`;
     this.newWebcam.style.display = "";
+    this.newWebcam.style.zIndex = "0";
+    // this.newWebcam.classList.add("jl-vid");
     this.el.appendChild(this.newWebcam);
   }
 
@@ -1657,6 +1669,7 @@ export class MagicCubeView extends widgets.DOMWidgetView {
 
     this.renderer.setClearColor(new THREE.Color("lightgrey"), 0);
     this.renderer.setSize(this.model.get("width"), this.model.get("height"));
+    this.renderer.domElement.style.zIndex = "2";
     this.renderer.domElement.style.position = "absolute";
     this.renderer.domElement.style.top = "0px";
     this.renderer.domElement.style.left = "0px";
@@ -1725,7 +1738,9 @@ export class MagicCubeView extends widgets.DOMWidgetView {
     });
 
     this.listenTo(this.model, "change:model_url", () => {
-      this.model.loadModel();
+      if (this.model.get("okToLoadModel")) {
+        this.model.loadModel();
+      }
     });
 
     this.listenTo(this.model, "change:show_stage", () => {
@@ -1756,8 +1771,4 @@ window.addEventListener("markerFound", () => {
 
 window.addEventListener("markerLost", () => {
   console.log("Marker lost");
-});
-
-window.addEventListener("camera-error", () => {
-  console.log("camera error");
 });

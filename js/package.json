@@ -67,11 +67,13 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@ar-js-org/ar.js": "^3.4.5",
     "@jupyter-widgets/base": "*",
     "buffer": "^4.9.2",
     "html2canvas": "v1.0.0-alpha.12",
     "mqtt": "^2.11.0",
     "process": "^0.11.10",
+    "three": "^0.161.0",
     "underscore": "^1.8.3",
     "url": "^0.11.0",
     "util": "^0.12.3",

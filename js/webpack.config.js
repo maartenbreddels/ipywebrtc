@@ -17,6 +17,7 @@ crypto.createHash = (algorithm) =>
 
 var rules = [
   // { test: /\.json$/, use: "json-loader" },
+  { test: /\.css$/, use: ["style-loader", "css-loader"] },
 ];
 var externals = [
   "@jupyter-widgets/base",

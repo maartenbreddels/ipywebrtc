@@ -32,7 +32,7 @@
     "watch": "npm-run-all -p watch:*",
     "watch:nbextension": "webpack --watch --mode=development",
     "watch:labextension": "jupyter labextension watch .",
-    "test": "tsc && copyfiles package.json test_js && karma start --single-run"
+    "test": "tsc && copyfiles package.json css/*.css test_js && karma start --single-run"
   },
   "devDependencies": {
     "@jupyter-widgets/controls": "^1.5.0 || ^2 || ^3",
@@ -60,18 +60,21 @@
     "rimraf": "^2.4.1",
     "sinon": "^9.0.2",
     "sinon-chai": "^3.3.0",
-    "style-loader": "^0.13.1",
+    "style-loader": "^3.3.4",
     "tslint": "^5.11.0",
     "typescript": "^3.5.2",
     "webpack": "^5",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@ar-js-org/ar.js": "^3.4.5",
     "@jupyter-widgets/base": "*",
     "buffer": "^4.9.2",
+    "css-loader": "^6.10.0",
     "html2canvas": "v1.0.0-alpha.12",
     "mqtt": "^2.11.0",
     "process": "^0.11.10",
+    "three": "^0.161.0",
     "underscore": "^1.8.3",
     "url": "^0.11.0",
     "util": "^0.12.3",

@@ -1,0 +1,25 @@
+.a-scene-holder {
+  width: 640px;
+  height: 480px;
+  position: relative;
+  display: block;
+}
+
+.jl-vid {
+  width: 640px;
+  height: 480px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  /* z-index: -2; */
+}
+
+.jl-canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+.ar-container {
+  min-height: 480px;
+}
